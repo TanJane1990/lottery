@@ -274,18 +274,22 @@ export const fetchRealData = async (id: LotteryId) => {
 // --- Components ---
 const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryId?: LotteryId }> = ({ num, color, max, lotteryId }) => {
   return (
-    <motion.div
-      initial={{ scale: 0 }}
-      animate={{ scale: 1 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg text-shadow-sm flex-shrink-0`}
-      style={{
-        background: getGradient(color, lotteryId),
-        boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.2)'
-      }}
-    >
-      {formatNum(num, max)}
-    </motion.div>
+    <div className="relative flex flex-col items-center">
+      <motion.div
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+        className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0 z-10 overflow-hidden`}
+        style={{
+          background: getGradient(color, lotteryId),
+          boxShadow: 'inset -2px -4px 6px rgba(0,0,0,0.3), inset 2px 2px 4px rgba(255,255,255,0.3)'
+        }}
+      >
+        <div className="absolute top-[8%] left-[15%] w-[50%] h-[30%] bg-gradient-to-b from-white/70 to-transparent rounded-full pointer-events-none transform -rotate-12 blur-[0.5px]"></div>
+        <span className="relative z-10 text-shadow-sm">{formatNum(num, max)}</span>
+      </motion.div>
+      <div className="w-7 h-1.5 bg-black/20 dark:bg-black/40 rounded-[100%] blur-[2px] -mt-1 z-0 absolute bottom-[-4px]"></div>
+    </div>
   );
 };
 
@@ -351,7 +355,7 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
   return (
     <div className="pb-6">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-12 pb-16 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,32px)+16px)] pb-16 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
           <Trophy size={200} />
         </div>
@@ -450,7 +454,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 pt-10 pb-4 px-4 shadow-sm z-10 sticky top-0">
+      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,32px)+12px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
         {/* Lottery Tabs */}
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
@@ -552,7 +556,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                 <div className="absolute right-0 -mr-2 text-8xl font-black text-gray-50 opacity-60 select-none pointer-events-none">
                   {idx + 1}
                 </div>
-                <div className="flex flex-wrap gap-2 relative z-10">
+                <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 relative z-10 w-full overflow-x-auto hide-scrollbar py-2">
                   {set.reds.map((n, i) => (
                     <Ball key={`r-${idx}-${i}`} num={n} color="red" max={config.red.max} lotteryId={config.id} />
                   ))}
@@ -648,7 +652,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
-      <div className="bg-white dark:bg-slate-900 pt-10 pb-4 px-4 shadow-sm z-10 sticky top-0">
+      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,32px)+12px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">历史开奖</h1>
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
           {LOTTERIES.map(l => (
@@ -681,7 +685,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void }) => {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-16 pb-12 px-6 shadow-lg">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,32px)+24px)] pb-12 px-6 shadow-lg">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white dark:bg-slate-900 /10 rounded-full flex items-center justify-center border-2 border-white/20">
             <User size={32} className="text-white" />
