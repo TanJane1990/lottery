@@ -189,7 +189,7 @@ const generateUniqueNumbers = (config: LotteryConfig, history: any[]) => {
 const generateMockResults = () => {
   const results: Record<string, any[]> = {};
   LOTTERIES.forEach(config => {
-    results[config.id] = Array.from({ length: 15 }, (_, i) => ({
+    results[config.id] = Array.from({ length: 60 }, (_, i) => ({
       issue: `2023${(120 - i).toString().padStart(3, '0')}`,
       date: new Date(Date.now() - i * 86400000 * (config.id === 'SSQ' ? 2 : 1)).toISOString().split('T')[0],
       ...generateUniqueNumbers(config, [])
@@ -200,7 +200,7 @@ const generateMockResults = () => {
 const MOCK_RESULTS = generateMockResults();
 
 const fetchSporttery = async (gameNo: string) => {
-  const url = `https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=${gameNo}&provinceId=0&pageSize=15&isVerify=1&pageNo=1`;
+  const url = `https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=${gameNo}&provinceId=0&pageSize=60&isVerify=1&pageNo=1`;
   try {
     const response = await CapacitorHttp.request({ url, method: 'GET' });
     const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
@@ -227,7 +227,7 @@ const fetchSporttery = async (gameNo: string) => {
 };
 
 const fetchCWL = async (name: string) => {
-  const url = `https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=${name}&issueCount=15`;
+  const url = `https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=${name}&issueCount=60`;
   try {
     const response = await CapacitorHttp.request({ 
       url, 
@@ -355,12 +355,12 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
   return (
     <div className="pb-6">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,32px)+16px)] pb-16 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,32px)+16px)] pb-16 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
           <Trophy size={200} />
         </div>
         <h1 className="text-3xl font-bold text-white mb-2 relative z-10">彩票助手</h1>
-        <p className="text-slate-300 text-sm relative z-10">理性购彩，量力而行。公益体彩，乐善人生。</p>
+        <p className="text-red-100 text-sm relative z-10">理性购彩，量力而行。公益体彩，乐善人生。</p>
       </div>
 
       {/* Quick Access Grid */}
@@ -374,7 +374,9 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
             >
               <div className="flex justify-between items-start mb-2">
                 {lottery.icon ? (
-                  <img src={lottery.icon} alt={lottery.name} className="w-10 h-10 object-contain drop-shadow-sm" />
+                  <div className="w-11 h-11 flex items-center justify-center bg-white/60 dark:bg-black/20 rounded-xl overflow-hidden drop-shadow-sm">
+                    <img src={lottery.icon} alt={lottery.name} className="w-8 h-8 object-contain" />
+                  </div>
                 ) : (
                   <span className={`text-xs font-bold px-2 py-0.5 rounded-md text-white ${THEME_CLASSES[lottery.theme].bg}`}>
                     {lottery.org}
@@ -882,6 +884,21 @@ export default function App() {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
                     className="absolute inset-0"
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.2}
+                    onDragEnd={(e, { offset, velocity }) => {
+                      const swipePower = offset.x * velocity.x;
+                      const tabIds = NAV_ITEMS.map(i => i.id);
+                      const currentIdx = tabIds.indexOf(activeTab);
+                      if (swipePower < -5000 && currentIdx < tabIds.length - 1) { // Swipe Left (Next Tab)
+                        setActiveTab(tabIds[currentIdx + 1]);
+                        if (tabIds[currentIdx + 1] === 'pick' && pickLotteryId) setPickLotteryId(pickLotteryId);
+                      } else if (swipePower > 5000 && currentIdx > 0) { // Swipe Right (Prev Tab)
+                        setActiveTab(tabIds[currentIdx - 1]);
+                        if (tabIds[currentIdx - 1] === 'pick' && pickLotteryId) setPickLotteryId(pickLotteryId);
+                      }
+                    }}
                   >
                     {activeTab === 'home' && <HomeView onNavigate={(tab, id) => { if (id) setPickLotteryId(id); setActiveTab(tab); }} resultsData={resultsData} />}
                     {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} resultsData={resultsData} />}
