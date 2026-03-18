@@ -711,7 +711,7 @@ const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[
             给开发者充个电，祝你早日脱非入欧，喜中头奖！到时候别忘了回来还愿哦。
           </p>
           <div className="w-48 h-48 sm:w-56 sm:h-56 bg-gray-50 rounded-xl overflow-hidden p-2 border border-gray-100 dark:border-slate-700">
-            <img src="/icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-lg shadow-inner" />
+            <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-lg shadow-inner" />
           </div>
         </div>
 
@@ -779,6 +779,31 @@ export default function App() {
     }
   });
   const [toast, setToast] = useState({ visible: false, message: '' });
+
+  // Swipe gesture state
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStart === null) return;
+    const touchEnd = e.changedTouches[0].clientX;
+    const distance = touchStart - touchEnd;
+    const tabIds = NAV_ITEMS.map(i => i.id);
+    const currentIdx = tabIds.indexOf(activeTab);
+
+    if (distance > 50 && currentIdx < tabIds.length - 1) {
+      // Swipe Left -> Next
+      setActiveTab(tabIds[currentIdx + 1]);
+      if (tabIds[currentIdx + 1] === 'pick' && pickLotteryId) setPickLotteryId(pickLotteryId);
+    } else if (distance < -50 && currentIdx > 0) {
+      // Swipe Right -> Prev
+      setActiveTab(tabIds[currentIdx - 1]);
+      if (tabIds[currentIdx - 1] === 'pick' && pickLotteryId) setPickLotteryId(pickLotteryId);
+    }
+  };
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), 2500);
@@ -890,7 +915,11 @@ export default function App() {
               className="w-full h-full flex flex-col absolute inset-0"
             >
               {/* Content Area */}
-              <div className="flex-1 overflow-hidden relative">
+              <div 
+                className="flex-1 overflow-hidden relative"
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
+              >
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={activeTab}
@@ -899,21 +928,6 @@ export default function App() {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2 }}
                     className="absolute inset-0"
-                    drag="x"
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0.2}
-                    onDragEnd={(e, { offset, velocity }) => {
-                      const swipePower = offset.x * velocity.x;
-                      const tabIds = NAV_ITEMS.map(i => i.id);
-                      const currentIdx = tabIds.indexOf(activeTab);
-                      if (swipePower < -5000 && currentIdx < tabIds.length - 1) { // Swipe Left (Next Tab)
-                        setActiveTab(tabIds[currentIdx + 1]);
-                        if (tabIds[currentIdx + 1] === 'pick' && pickLotteryId) setPickLotteryId(pickLotteryId);
-                      } else if (swipePower > 5000 && currentIdx > 0) { // Swipe Right (Prev Tab)
-                        setActiveTab(tabIds[currentIdx - 1]);
-                        if (tabIds[currentIdx - 1] === 'pick' && pickLotteryId) setPickLotteryId(pickLotteryId);
-                      }
-                    }}
                   >
                     {activeTab === 'home' && <HomeView onNavigate={(tab, id) => { if (id) setPickLotteryId(id); setActiveTab(tab); }} resultsData={resultsData} />}
                     {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} resultsData={resultsData} />}

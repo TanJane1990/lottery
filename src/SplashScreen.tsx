@@ -22,7 +22,7 @@ export const SplashScreen = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent"></div>
         {/* 内部图标 */}
         <div className="w-full h-full rounded-[2rem] flex items-center justify-center shadow-inner overflow-hidden">
-          <img src="/icons/tb.png" alt="App Icon" className="w-full h-full object-cover" />
+          <img src="./icons/tb.png" alt="App Icon" className="w-full h-full object-cover" />
         </div>
       </motion.div>
       
