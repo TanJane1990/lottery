@@ -457,7 +457,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,32px)+12px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
+      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,44px)+20px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
         {/* Lottery Tabs */}
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
@@ -655,7 +655,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
-      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,32px)+12px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
+      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,44px)+20px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">历史开奖</h1>
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
           {LOTTERIES.map(l => (
@@ -688,7 +688,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void }) => {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,32px)+24px)] pb-12 px-6 shadow-lg">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,44px)+28px)] pb-12 px-6 shadow-lg">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white dark:bg-slate-900 /10 rounded-full flex items-center justify-center border-2 border-white/20">
             <User size={32} className="text-white" />
