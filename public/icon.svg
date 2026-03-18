@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#ef4444"/>
+  <circle cx="256" cy="256" r="144" fill="#ffffff"/>
+  <text x="256" y="310" font-size="160" font-family="sans-serif" font-weight="bold" text-anchor="middle" fill="#ef4444">彩</text>
+</svg>
