@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.jane.lotterygenerator',
-  appName: 'Lottery Generator',
+  appName: '彩票助手',
   webDir: 'dist'
 };
 
