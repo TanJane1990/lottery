@@ -138,24 +138,33 @@ const fetchFootballMatches = async (): Promise<SportsMatch[]> => {
       if (!list || !Array.isArray(list) || list.length === 0) continue;
       
       const results = list.slice(0, 50).map((match: any) => {
-        const subMatch = match.subMatchList?.[0];
-        const hadOdds = subMatch?.hadList?.[0] || subMatch?.hhadList?.[0];
-        const hhad = subMatch?.hhadList?.[0];
-        const leagueName = match.leagueNameAbbr || match.leagueName || '';
-        const homeTeam = match.homeTeamAbbName || match.homeTeamName || '';
-        const awayTeam = match.awayTeamAbbName || match.awayTeamName || '';
+        // API structure: match.had / match.hhad are direct objects (NOT in subMatchList)
+        const had = match.had || {};
+        const hhad = match.hhad || {};
+        const leagueName = match.leagueAbbName || match.leagueNameAbbr || match.leagueAllName || '';
+        const homeTeam = match.homeTeamAbbName || match.homeTeamAllName || '';
+        const awayTeam = match.awayTeamAbbName || match.awayTeamAllName || '';
         if (!homeTeam || !awayTeam) return null;
+        
+        // sellStatus can be number (2=Selling) or string
+        const sellStatus = match.matchStatus === 'Selling' || match.sellStatus === 2 || match.sellStatus === 'OnSale';
+        const isClosed = match.matchStatus === 'Closed' || match.sellStatus === 'SoldOut';
+        
         return {
-          id: match.matchId || String(Math.random()),
-          matchNum: match.matchNumStr || match.matchNum || '',
+          id: String(match.matchId || Math.random()),
+          matchNum: match.matchNumStr || `${match.matchWeek || ''}${String(match.matchNum || '').slice(-3)}`,
           leagueName: leagueName || '未知',
           leagueColor: getLeagueColor(leagueName),
           homeTeam, awayTeam,
-          matchTime: match.matchTime ? match.matchTime.substring(11, 16) : '--:--',
-          matchDate: match.matchTime ? match.matchTime.substring(0, 10) : new Date().toISOString().split('T')[0],
-          status: match.sellStatus === 'OnSale' ? 'selling' as const : match.sellStatus === 'SoldOut' ? 'closed' as const : 'upcoming' as const,
-          odds: { win: hadOdds?.a || '-', draw: hadOdds?.d || '-', lose: hadOdds?.h || '-' },
-          handicap: hhad?.fixedodds || '',
+          matchTime: match.matchTime ? match.matchTime.substring(0, 5) : '--:--',
+          matchDate: match.matchDate || match.businessDate || new Date().toISOString().split('T')[0],
+          status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
+          odds: {
+            win: had.a || '-',
+            draw: had.d || '-',
+            lose: had.h || '-',
+          },
+          handicap: hhad.goalLine || '',
         };
       }).filter(Boolean) as SportsMatch[];
       
@@ -181,30 +190,42 @@ const fetchBasketballMatches = async (): Promise<SportsMatch[]> => {
       const list = data?.value?.matchInfoList;
       if (!list || !Array.isArray(list) || list.length === 0) continue;
       
-      const results = list.slice(0, 50).map((match: any) => {
-        const subMatch = match.subMatchList?.[0];
-        const mnlOdds = subMatch?.mnlList?.[0];
-        const hdcOdds = subMatch?.hdcList?.[0];
-        const leagueName = match.leagueNameAbbr || match.leagueName || '';
-        const homeTeam = match.homeTeamAbbName || match.homeTeamName || '';
-        const awayTeam = match.awayTeamAbbName || match.awayTeamName || '';
-        if (!homeTeam || !awayTeam) return null;
-        return {
-          id: match.matchId || String(Math.random()),
-          matchNum: match.matchNumStr || match.matchNum || '',
-          leagueName: leagueName || '未知',
-          leagueColor: getLeagueColor(leagueName),
-          homeTeam, awayTeam,
-          matchTime: match.matchTime ? match.matchTime.substring(11, 16) : '--:--',
-          matchDate: match.matchTime ? match.matchTime.substring(0, 10) : new Date().toISOString().split('T')[0],
-          status: match.sellStatus === 'OnSale' ? 'selling' as const : match.sellStatus === 'SoldOut' ? 'closed' as const : 'upcoming' as const,
-          odds: { win: mnlOdds?.a || hdcOdds?.a || '-', lose: mnlOdds?.h || hdcOdds?.h || '-' },
-          handicap: hdcOdds?.fixedodds || '',
-          totalPoints: subMatch?.hilo?.[0]?.fixedodds || '',
-        };
-      }).filter(Boolean) as SportsMatch[];
+      // Basketball: data is nested in subMatchList
+      const results: SportsMatch[] = [];
+      for (const group of list) {
+        const subs = group.subMatchList || [];
+        for (const sub of subs) {
+          const mnl = sub.mnl || {};
+          const hdc = sub.hdc || {};
+          const hilo = sub.hilo || {};
+          const leagueName = sub.leagueAbbName || sub.leagueAllName || '';
+          const homeTeam = sub.homeTeamAbbName || sub.homeTeamAllName || '';
+          const awayTeam = sub.awayTeamAbbName || sub.awayTeamAllName || '';
+          if (!homeTeam || !awayTeam) continue;
+          
+          const sellStatus = sub.matchStatus === 'Selling' || sub.sellStatus === 2;
+          const isClosed = sub.matchStatus === 'Closed' || sub.sellStatus === 'SoldOut';
+          
+          results.push({
+            id: String(sub.matchId || Math.random()),
+            matchNum: sub.matchNumStr || `${sub.matchWeek || ''}${String(sub.matchNum || '').slice(-3)}`,
+            leagueName: leagueName || '未知',
+            leagueColor: getLeagueColor(leagueName),
+            homeTeam, awayTeam,
+            matchTime: sub.matchTime ? sub.matchTime.substring(0, 5) : '--:--',
+            matchDate: sub.matchDate || sub.businessDate || new Date().toISOString().split('T')[0],
+            status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
+            odds: {
+              win: mnl.a || '-',
+              lose: mnl.h || '-',
+            },
+            handicap: hdc.goalLine || '',
+            totalPoints: hilo.goalLine || '',
+          });
+        }
+      }
       
-      if (results.length > 0) return results;
+      if (results.length > 0) return results.slice(0, 50);
     } catch (e) {
       console.warn(`Fetch basketball from ${url} failed`, e);
     }
