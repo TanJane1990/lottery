@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble } from 'lucide-react';
 import { CapacitorHttp } from '@capacitor/core';
 import { SplashScreen } from './SplashScreen';
+import { SportsView } from './SportsView';
 
 // --- Types ---
 type Org = '福彩' | '体彩';
@@ -905,6 +906,7 @@ export default function App() {
   const NAV_ITEMS = [
     { id: 'home', icon: Home, label: '首页' },
     { id: 'pick', icon: Dices, label: '选号' },
+    { id: 'sports', icon: Dribbble, label: '竞彩' },
     { id: 'results', icon: Trophy, label: '开奖' },
     { id: 'mine', icon: User, label: '我的' },
   ];
@@ -940,6 +942,7 @@ export default function App() {
                   >
                     {activeTab === 'home' && <HomeView onNavigate={(tab, id) => { if (id) setPickLotteryId(id); setActiveTab(tab); }} resultsData={resultsData} />}
                     {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} resultsData={resultsData} />}
+                    {activeTab === 'sports' && <SportsView />}
                     {activeTab === 'results' && <ResultsView resultsData={resultsData} />}
                     {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} />}
                   </motion.div>
