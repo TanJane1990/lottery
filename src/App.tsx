@@ -781,24 +781,33 @@ export default function App() {
   const [toast, setToast] = useState({ visible: false, message: '' });
 
   // Swipe gesture state
-  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchStart, setTouchStart] = useState<{ x: number, y: number, time: number } | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart(e.targetTouches[0].clientX);
+    if ((e.target as Element).closest('.overflow-x-auto')) return;
+    setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY, time: Date.now() });
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    if (touchStart === null) return;
-    const touchEnd = e.changedTouches[0].clientX;
-    const distance = touchStart - touchEnd;
+    if (!touchStart) return;
+    const touchEnd = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    const distanceX = touchStart.x - touchEnd.x;
+    const distanceY = Math.abs(touchStart.y - touchEnd.y);
+    const timeDiff = Date.now() - touchStart.time;
+    
+    setTouchStart(null);
+
+    // Ignore mostly vertical swipes or long presses
+    if (timeDiff > 600 || distanceY > Math.abs(distanceX)) return;
+
     const tabIds = NAV_ITEMS.map(i => i.id);
     const currentIdx = tabIds.indexOf(activeTab);
 
-    if (distance > 50 && currentIdx < tabIds.length - 1) {
+    if (distanceX > 40 && currentIdx < tabIds.length - 1) {
       // Swipe Left -> Next
       setActiveTab(tabIds[currentIdx + 1]);
       if (tabIds[currentIdx + 1] === 'pick' && pickLotteryId) setPickLotteryId(pickLotteryId);
-    } else if (distance < -50 && currentIdx > 0) {
+    } else if (distanceX < -40 && currentIdx > 0) {
       // Swipe Right -> Prev
       setActiveTab(tabIds[currentIdx - 1]);
       if (tabIds[currentIdx - 1] === 'pick' && pickLotteryId) setPickLotteryId(pickLotteryId);
