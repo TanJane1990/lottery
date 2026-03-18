@@ -699,7 +699,22 @@ const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 -mt-6 relative z-10">
+      <div className="flex-1 overflow-y-auto p-4 -mt-6 relative z-10 space-y-4">
+        {/* Donation Section */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col items-center text-center">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles size={20} className="text-yellow-500" />
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">“锦鲤”充电站</h2>
+            <Sparkles size={20} className="text-yellow-500" />
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 px-2">
+            给开发者充个电，祝你早日脱非入欧，喜中头奖！到时候别忘了回来还愿哦。
+          </p>
+          <div className="w-48 h-48 sm:w-56 sm:h-56 bg-gray-50 rounded-xl overflow-hidden p-2 border border-gray-100 dark:border-slate-700">
+            <img src="/icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-lg shadow-inner" />
+          </div>
+        </div>
+
         {savedTickets.length === 0 ? (
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-slate-800">
             <History size={48} className="mx-auto text-gray-300 mb-4" />
