@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2 } from 'lucide-react';
+import { CapacitorHttp } from '@capacitor/core';
+import { SplashScreen } from './SplashScreen';
 
 // --- Types ---
 type Org = '福彩' | '体彩';
@@ -14,6 +16,8 @@ interface LotteryConfig {
   red: { max: number; count: number; allowDuplicate?: boolean };
   blue: { max: number; count: number; allowDuplicate?: boolean };
   desc: string;
+  icon?: string;
+  schedule?: string;
 }
 
 interface SavedTicket {
@@ -44,18 +48,104 @@ const THEME_CLASSES = {
 };
 
 const LOTTERIES: LotteryConfig[] = [
-  { id: 'SSQ', name: '双色球', org: '福彩', theme: 'red', red: { max: 33, count: 6 }, blue: { max: 16, count: 1 }, desc: '2元可中1000万' },
-  { id: 'DLT', name: '大乐透', org: '体彩', theme: 'blue', red: { max: 35, count: 5 }, blue: { max: 12, count: 2 }, desc: '3元可中1800万' },
-  { id: 'FC3D', name: '福彩3D', org: '福彩', theme: 'red', red: { max: 9, count: 3, allowDuplicate: true }, blue: { max: 0, count: 0 }, desc: '天天开奖，玩法简单' },
-  { id: 'PL3', name: '排列3', org: '体彩', theme: 'blue', red: { max: 9, count: 3, allowDuplicate: true }, blue: { max: 0, count: 0 }, desc: '天天开奖，轻松赢' },
-  { id: 'QLC', name: '七乐彩', org: '福彩', theme: 'red', red: { max: 30, count: 7 }, blue: { max: 0, count: 0 }, desc: '百万大奖等你拿' },
-  { id: 'QXC', name: '七星彩', org: '体彩', theme: 'blue', red: { max: 9, count: 6, allowDuplicate: true }, blue: { max: 14, count: 1 }, desc: '经典玩法，惊喜不断' },
+  { id: 'SSQ', name: '双色球', org: '福彩', theme: 'red', red: { max: 33, count: 6 }, blue: { max: 16, count: 1 }, desc: '2元可中1000万', icon: '/icons/SSQ.png', schedule: '每周二、四、日开奖' },
+  { id: 'DLT', name: '大乐透', org: '体彩', theme: 'blue', red: { max: 35, count: 5 }, blue: { max: 12, count: 2 }, desc: '3元可中1800万', icon: '/icons/DLT.png', schedule: '每周一、三、六开奖' },
+  { id: 'FC3D', name: '福彩3D', org: '福彩', theme: 'red', red: { max: 9, count: 3, allowDuplicate: true }, blue: { max: 0, count: 0 }, desc: '天天开奖，玩法简单', icon: '/icons/FC3D.png', schedule: '每日开奖' },
+  { id: 'PL3', name: '排列3', org: '体彩', theme: 'blue', red: { max: 9, count: 3, allowDuplicate: true }, blue: { max: 0, count: 0 }, desc: '天天开奖，轻松赢', icon: '/icons/P3.png', schedule: '每日开奖' },
+  { id: 'QLC', name: '七乐彩', org: '福彩', theme: 'red', red: { max: 30, count: 7 }, blue: { max: 0, count: 0 }, desc: '百万大奖等你拿', schedule: '每周一、三、五开奖' },
+  { id: 'QXC', name: '七星彩', org: '体彩', theme: 'blue', red: { max: 9, count: 6, allowDuplicate: true }, blue: { max: 14, count: 1 }, desc: '经典玩法，惊喜不断', schedule: '每周二、五、日开奖' },
 ];
 
 // --- Helpers ---
 const formatNum = (n: number, max: number) => max > 9 ? n.toString().padStart(2, '0') : n.toString();
 
-const generateNumbers = (config: LotteryConfig) => {
+const C = (n: number, r: number): number => {
+  if (r > n || r < 0) return 0;
+  let res = 1;
+  for (let i = 1; i <= r; i++) res = res * (n - i + 1) / i;
+  return Math.round(res);
+};
+
+// --- Strategy Pattern Implementations ---
+interface PlayStrategy {
+  playName: string;
+  basePricePerBet: number;
+  calculateBets(selectedReds: number, selectedBlues: number): number;
+  isValidSelection(selectedReds: number, selectedBlues: number): boolean;
+}
+
+class StandardStrategy implements PlayStrategy {
+  constructor(
+    public playName: string,
+    public basePricePerBet: number,
+    private requiredReds: number,
+    private requiredBlues: number
+  ) {}
+
+  calculateBets(selectedReds: number, selectedBlues: number): number {
+    if (!this.isValidSelection(selectedReds, selectedBlues)) return 0;
+    const rC = C(selectedReds, this.requiredReds);
+    const bC = this.requiredBlues > 0 ? C(selectedBlues, this.requiredBlues) : 1;
+    return rC * bC;
+  }
+
+  isValidSelection(selectedReds: number, selectedBlues: number): boolean {
+    return selectedReds >= this.requiredReds && selectedBlues >= this.requiredBlues;
+  }
+}
+
+class DLTExtraStrategy implements PlayStrategy {
+  public playName: string;
+  public basePricePerBet: number;
+
+  constructor(isAppended: boolean = false) {
+    this.playName = isAppended ? "大乐透-追加" : "大乐透";
+    this.basePricePerBet = isAppended ? 3 : 2;
+  }
+
+  calculateBets(selectedReds: number, selectedBlues: number): number {
+    if (!this.isValidSelection(selectedReds, selectedBlues)) return 0;
+    return C(selectedReds, 5) * C(selectedBlues, 2);
+  }
+
+  isValidSelection(selectedReds: number, selectedBlues: number): boolean {
+    return selectedReds >= 5 && selectedBlues >= 2;
+  }
+}
+
+class DigitalStrategy implements PlayStrategy {
+  constructor(
+    public playName: string,
+    public basePricePerBet: number,
+    private requiredSelections: number
+  ) {}
+
+  calculateBets(selectedReds: number, selectedBlues: number): number {
+    if (!this.isValidSelection(selectedReds, selectedBlues)) return 0;
+    return 1; // Simplified for digital lotteries for now
+  }
+
+  isValidSelection(selectedReds: number, selectedBlues: number): boolean {
+    return selectedReds >= this.requiredSelections;
+  }
+}
+
+const getStrategy = (config: LotteryConfig, isDltExtra: boolean): PlayStrategy => {
+  if (config.id === 'DLT') return new DLTExtraStrategy(isDltExtra);
+  if (['FC3D', 'PL3', 'QXC'].includes(config.id)) {
+    return new DigitalStrategy(config.name, 2, config.red.count);
+  }
+  return new StandardStrategy(config.name, 2, config.red.count, config.blue.count);
+};
+
+const getGradient = (type: 'red' | 'blue', id?: LotteryId | null) => {
+  if (id === 'FC3D') return 'radial-gradient(circle at 30% 30%, #a4d2f9, #5e9ddc)'; // 3D is blue
+  if (id === 'QLC') return 'radial-gradient(circle at 30% 30%, #fbd56e, #d4a024)'; // QLC is yellow
+  if (type === 'blue') return 'radial-gradient(circle at 30% 30%, #7db8f1, #3b5998)'; // Default blue
+  return 'radial-gradient(circle at 30% 30%, #f67a6c, #c0392b)'; // Default red
+};
+
+const generateUniqueNumbers = (config: LotteryConfig, history: any[]) => {
   const getNum = (max: number, zeroBased: boolean) => Math.floor(Math.random() * (zeroBased ? max + 1 : max)) + (zeroBased ? 0 : 1);
 
   const getSet = (max: number, count: number, allowDup: boolean, zeroBased: boolean) => {
@@ -73,35 +163,126 @@ const generateNumbers = (config: LotteryConfig) => {
   const zeroRed = ['FC3D', 'PL3', 'QXC'].includes(config.id);
   const zeroBlue = ['QXC'].includes(config.id);
 
-  return {
-    reds: getSet(config.red.max, config.red.count, !!config.red.allowDuplicate, zeroRed),
-    blues: getSet(config.blue.max, config.blue.count, !!config.blue.allowDuplicate, zeroBlue)
-  };
+  const historySet = new Set((history || []).map(item => {
+    const redsStr = item.reds.map((n: number) => formatNum(n, config.red.max)).join(',');
+    const bluesStr = item.blues.map((n: number) => formatNum(n, config.blue.max)).join(',');
+    return `${redsStr}|${bluesStr}`;
+  }));
+
+  let newCombination = "";
+  let reds: number[] = [];
+  let blues: number[] = [];
+  
+  do {
+    reds = getSet(config.red.max, config.red.count, !!config.red.allowDuplicate, zeroRed);
+    blues = getSet(config.blue.max, config.blue.count, !!config.blue.allowDuplicate, zeroBlue);
+    
+    const redsStr = reds.map(n => formatNum(n, config.red.max)).join(',');
+    const bluesStr = blues.map(n => formatNum(n, config.blue.max)).join(',');
+    
+    newCombination = `${redsStr}|${bluesStr}`;
+  } while (historySet.has(newCombination));
+
+  return { reds, blues };
 };
 
 const generateMockResults = () => {
   const results: Record<string, any[]> = {};
   LOTTERIES.forEach(config => {
-    results[config.id] = Array.from({ length: 10 }, (_, i) => ({
+    results[config.id] = Array.from({ length: 15 }, (_, i) => ({
       issue: `2023${(120 - i).toString().padStart(3, '0')}`,
       date: new Date(Date.now() - i * 86400000 * (config.id === 'SSQ' ? 2 : 1)).toISOString().split('T')[0],
-      ...generateNumbers(config)
+      ...generateUniqueNumbers(config, [])
     }));
   });
   return results;
 };
-const mockResults = generateMockResults();
+const MOCK_RESULTS = generateMockResults();
+
+const fetchSporttery = async (gameNo: string) => {
+  const url = `https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=${gameNo}&provinceId=0&pageSize=15&isVerify=1&pageNo=1`;
+  try {
+    const response = await CapacitorHttp.request({ url, method: 'GET' });
+    const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+    if (!data?.value?.list) throw new Error('Invalid Sporttery data');
+    return data.value.list.map((item: any) => {
+      const nums = item.lotteryDrawResult.split(' ');
+      let reds: number[] = [];
+      let blues: number[] = [];
+      if (gameNo === '85') { reds = nums.slice(0, 5).map(Number); blues = nums.slice(5, 7).map(Number); }
+      else if (gameNo === '35') { reds = nums.slice(0, 3).map(Number); }
+      else if (gameNo === '04') { reds = nums.slice(0, 6).map(Number); blues = nums.slice(6, 7).map(Number); }
+      return {
+        issue: item.lotteryDrawNum,
+        date: String(item.lotteryDrawTime).split(' ')[0] || item.lotteryDrawTime,
+        pool: item.poolBalanceAfterdraw || item.poolBalance || '',
+        reds,
+        blues
+      };
+    });
+  } catch (e) {
+    console.warn(`Fetch Sporttery ${gameNo} failed`, e);
+    throw e;
+  }
+};
+
+const fetchCWL = async (name: string) => {
+  const url = `https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=${name}&issueCount=15`;
+  try {
+    const response = await CapacitorHttp.request({ 
+      url, 
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
+    });
+    const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+    if (!data?.result) throw new Error('Invalid CWL data');
+    return data.result.map((item: any) => {
+      let reds: number[] = [];
+      let blues: number[] = [];
+      if (item.red) reds = item.red.split(',').map(Number);
+      if (item.blue) blues = item.blue.split(',').map(Number);
+      return {
+        issue: item.code,
+        date: String(item.date).split(' ')[0] || item.date,
+        pool: item.poolmoney || '',
+        reds,
+        blues
+      };
+    });
+  } catch (e) {
+    console.warn(`Fetch CWL ${name} failed`, e);
+    throw e;
+  }
+};
+
+export const fetchRealData = async (id: LotteryId) => {
+  try {
+    if (id === 'DLT') return await fetchSporttery('85');
+    if (id === 'PL3') return await fetchSporttery('35');
+    if (id === 'QXC') return await fetchSporttery('04');
+    
+    if (id === 'SSQ') return await fetchCWL('ssq');
+    if (id === 'FC3D') return await fetchCWL('3d');
+    if (id === 'QLC') return await fetchCWL('qlc');
+  } catch (e) {
+    console.log('Using mock data as fallback for', id);
+    return MOCK_RESULTS[id];
+  }
+  return MOCK_RESULTS[id];
+};
 
 // --- Components ---
-const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number }> = ({ num, color, max }) => {
-  const isRed = color === 'red';
+const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryId?: LotteryId }> = ({ num, color, max, lotteryId }) => {
   return (
     <motion.div
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg shadow-inner
-      ${isRed ? 'bg-gradient-to-br from-red-400 to-red-600 shadow-red-200' : 'bg-gradient-to-br from-blue-400 to-blue-600 shadow-blue-200'}`}
+      className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg text-shadow-sm flex-shrink-0`}
+      style={{
+        background: getGradient(color, lotteryId),
+        boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.2)'
+      }}
     >
       {formatNum(num, max)}
     </motion.div>
@@ -110,26 +291,41 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number }> = ({ n
 
 const ResultCard: React.FC<{ lottery: LotteryConfig, result: any }> = ({ lottery, result }) => {
   return (
-    <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-gray-800">{lottery.name}</span>
-          <span className="text-xs text-gray-500">第 {result.issue} 期</span>
+    <div className="bg-[#fcfdfd] dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-none sm:rounded-xl p-3 w-full flex flex-row items-center sm:items-stretch shadow-sm">
+      {/* Name on the left */}
+      <div className="w-16 sm:w-20 flex-shrink-0 flex items-center justify-center font-bold text-[#6287ba] text-base sm:text-lg border-r border-gray-100 dark:border-slate-800">
+        {lottery.name}
+      </div>
+
+      <div className="flex-1 px-3 sm:px-4 flex flex-col justify-center">
+         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-xs sm:text-sm text-gray-800 dark:text-gray-100 ">
+           <span className="font-medium whitespace-nowrap">第{result.issue}期</span>
+           {result.pool && <span className="text-gray-600 dark:text-gray-300 whitespace-nowrap">奖池累计金额：<span className="text-[#c0392b] font-bold">￥{result.pool}元</span></span>}
+         </div>
+         <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            {result.reds.map((n: number, i: number) => (
+              <div key={`r-${i}`} style={{ background: getGradient('red', lottery.id), boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.2)' }} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs text-shadow-sm">
+                {formatNum(n, lottery.red.max)}
+              </div>
+            ))}
+            {result.blues.map((n: number, i: number) => (
+              <div key={`b-${i}`} style={{ background: getGradient('blue', lottery.id), boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.2)' }} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs text-shadow-sm">
+                {formatNum(n, lottery.blue.max)}
+              </div>
+            ))}
+         </div>
+      </div>
+
+      {lottery.schedule && (
+        <div className="hidden sm:flex w-36 flex-shrink-0 flex-col justify-center text-xs text-gray-600 dark:text-gray-300 border-l border-gray-100 dark:border-slate-800 pl-4 py-1">
+          <div className="mb-2 whitespace-nowrap">{lottery.schedule}</div>
+          <div className="flex gap-2 text-[#6287ba]">
+             <span className="cursor-pointer hover:underline">详情</span>
+             <span className="cursor-pointer hover:underline">往期</span>
+             <span className="cursor-pointer hover:underline">往期视频</span>
+          </div>
         </div>
-        <span className="text-xs text-gray-400">{result.date}</span>
-      </div>
-      <div className="flex flex-wrap gap-1.5">
-        {result.reds.map((n: number, i: number) => (
-          <div key={`r-${i}`} className="w-8 h-8 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-sm font-bold border border-red-100">
-            {formatNum(n, lottery.red.max)}
-          </div>
-        ))}
-        {result.blues.map((n: number, i: number) => (
-          <div key={`b-${i}`} className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold border border-blue-100">
-            {formatNum(n, lottery.blue.max)}
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   );
 };
@@ -151,7 +347,7 @@ const Toast = ({ message, visible }: { message: string, visible: boolean }) => (
 );
 
 // --- Views ---
-const HomeView = ({ onNavigate, mockResults }: { onNavigate: (tab: string, id?: LotteryId) => void, mockResults: Record<string, any[]> }) => {
+const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: LotteryId) => void, resultsData: Record<string, any[]> }) => {
   return (
     <div className="pb-6">
       {/* Hero Section */}
@@ -165,7 +361,7 @@ const HomeView = ({ onNavigate, mockResults }: { onNavigate: (tab: string, id?: 
 
       {/* Quick Access Grid */}
       <div className="px-4 -mt-8 relative z-20">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 grid grid-cols-2 gap-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-4">
           {LOTTERIES.slice(0, 4).map(lottery => (
             <div
               key={lottery.id}
@@ -173,13 +369,17 @@ const HomeView = ({ onNavigate, mockResults }: { onNavigate: (tab: string, id?: 
               className={`p-4 rounded-xl cursor-pointer transition-transform active:scale-95 bg-gradient-to-br ${THEME_CLASSES[lottery.theme].lightBg} border border-white`}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className={`text-xs font-bold px-2 py-0.5 rounded-md text-white ${THEME_CLASSES[lottery.theme].bg}`}>
-                  {lottery.org}
-                </span>
+                {lottery.icon ? (
+                  <img src={lottery.icon} alt={lottery.name} className="w-10 h-10 object-contain drop-shadow-sm" />
+                ) : (
+                  <span className={`text-xs font-bold px-2 py-0.5 rounded-md text-white ${THEME_CLASSES[lottery.theme].bg}`}>
+                    {lottery.org}
+                  </span>
+                )}
                 <ChevronRight size={16} className={THEME_CLASSES[lottery.theme].text} />
               </div>
-              <h3 className="text-lg font-bold text-gray-800">{lottery.name}</h3>
-              <p className="text-xs text-gray-500 mt-1">{lottery.desc}</p>
+              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 ">{lottery.name}</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">{lottery.desc}</p>
             </div>
           ))}
         </div>
@@ -188,39 +388,70 @@ const HomeView = ({ onNavigate, mockResults }: { onNavigate: (tab: string, id?: 
       {/* Recent Results Preview */}
       <div className="mt-8 px-4">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-gray-800">最新开奖</h2>
-          <button onClick={() => onNavigate('results')} className="text-sm text-gray-500 flex items-center">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 ">最新开奖</h2>
+          <button onClick={() => onNavigate('results')} className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 flex items-center">
             查看更多 <ChevronRight size={16} />
           </button>
         </div>
-        <div className="space-y-3">
-          <ResultCard lottery={LOTTERIES[0]} result={mockResults['SSQ'][0]} />
-          <ResultCard lottery={LOTTERIES[1]} result={mockResults['DLT'][0]} />
+        <div className="space-y-0 sm:space-y-3 divide-y divide-gray-100 dark:divide-slate-800 sm:divide-y-0 border-y sm:border-0 border-gray-200 dark:border-slate-700">
+          {resultsData['SSQ']?.[0] ? <ResultCard lottery={LOTTERIES[0]} result={resultsData['SSQ'][0]} /> : <div className="p-4 m-4 text-center text-gray-400 dark:text-gray-500 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse">正在加载双色球数据...</div>}
+          {resultsData['DLT']?.[0] ? <ResultCard lottery={LOTTERIES[1]} result={resultsData['DLT'][0]} /> : <div className="p-4 m-4 text-center text-gray-400 dark:text-gray-500 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse">正在加载大乐透数据...</div>}
         </div>
       </div>
     </div>
   );
 };
 
-const PickView = ({ selectedLotteryId, onSelectLottery, onSave }: { selectedLotteryId: LotteryId, onSelectLottery: (id: LotteryId) => void, onSave: (id: LotteryId, sets: any[]) => void }) => {
+const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: { selectedLotteryId: LotteryId, onSelectLottery: (id: LotteryId) => void, onSave: (id: LotteryId, sets: any[]) => void, resultsData: Record<string, any[]> }) => {
   const config = LOTTERIES.find(l => l.id === selectedLotteryId)!;
   const [sets, setSets] = useState<{reds: number[], blues: number[]}[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  // Manual Pick State
+  const [mode, setMode] = useState<'smart' | 'manual'>('smart');
+  const [manualReds, setManualReds] = useState<number[]>([]);
+  const [manualBlues, setManualBlues] = useState<number[]>([]);
+  const [isDltExtra, setIsDltExtra] = useState(false); // For DLT 追加
+
+  useEffect(() => {
+    setManualReds([]);
+    setManualBlues([]);
+    setSets([]);
+    setIsDltExtra(false);
+  }, [selectedLotteryId, mode]);
+
+  const currentStrategy = React.useMemo(() => getStrategy(config, isDltExtra), [config, isDltExtra]);
+  
+  const combinations = mode === 'manual' ? currentStrategy.calculateBets(manualReds.length, manualBlues.length) : 0;
+  const totalCost = combinations * currentStrategy.basePricePerBet;
+
+  const handleToggleManual = (type: 'red' | 'blue', num: number) => {
+    if (['FC3D', 'PL3', 'QXC'].includes(config.id)) {
+      // Simplified manual pick for these types not fully supported in this demo
+      return; 
+    }
+    if (type === 'red') {
+      setManualReds(prev => prev.includes(num) ? prev.filter(n => n !== num) : [...prev, num].sort((a,b)=>a-b));
+    } else {
+      setManualBlues(prev => prev.includes(num) ? prev.filter(n => n !== num) : [...prev, num].sort((a,b)=>a-b));
+    }
+  };
 
   const handleGenerate = (count: number) => {
     setIsGenerating(true);
     setTimeout(() => {
-      const newSets = Array.from({ length: count }, () => generateNumbers(config));
+      const history = resultsData[config.id] || [];
+      const newSets = Array.from({ length: count }, () => generateUniqueNumbers(config, history));
       setSets(prev => [...newSets, ...prev].slice(0, 10)); // Keep max 10 in view
       setIsGenerating(false);
     }, 400);
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       {/* Header */}
-      <div className="bg-white pt-10 pb-4 px-4 shadow-sm z-10 sticky top-0">
-        <h1 className="text-xl font-bold text-center text-gray-800 mb-4">智能机选</h1>
+      <div className="bg-white dark:bg-slate-900 pt-10 pb-4 px-4 shadow-sm z-10 sticky top-0">
+        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
         {/* Lottery Tabs */}
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
           {LOTTERIES.map(l => (
@@ -228,23 +459,83 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave }: { selectedLott
               key={l.id}
               onClick={() => { onSelectLottery(l.id); setSets([]); }}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
-                ${l.id === selectedLotteryId ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 text-gray-600'}`}
+                ${l.id === selectedLotteryId ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300'}`}
             >
               {l.name}
             </button>
           ))}
         </div>
+        
+        {/* Mode Selector */}
+        <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1 mx-2 mb-2 mt-2">
+          <button onClick={() => setMode('smart')} className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100 ' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>智能机选</button>
+          <button onClick={() => setMode('manual')} className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${mode === 'manual' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100 ' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>手选 / 复式</button>
+        </div>
       </div>
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        <AnimatePresence>
+        {mode === 'manual' ? (
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-800">
+            {['FC3D', 'PL3', 'QXC'].includes(config.id) ? (
+              <div className="text-center text-gray-400 dark:text-gray-500 py-10">数字型彩票手选功能开发中...</div>
+            ) : (
+              <>
+                 <div className="mb-4">
+                    <div className="flex justify-between items-end mb-2">
+                      <h3 className="font-bold text-gray-800 dark:text-gray-100 ">红球区</h3>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">至少选 {config.red.count} 个</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {Array.from({length: config.red.max}, (_, i) => i + 1).map(n => {
+                        const isSelected = manualReds.includes(n);
+                        return (
+                          <button key={`m-r-${n}`} onClick={() => handleToggleManual('red', n)} className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-sm border ${isSelected ? 'text-white border-transparent' : 'bg-[#f8f9fa] dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700'}`} style={isSelected ? { background: getGradient('red', config.id) } : {}}>
+                            {formatNum(n, config.red.max)}
+                          </button>
+                        )
+                      })}
+                    </div>
+                 </div>
+
+                 {config.blue.count > 0 && (
+                   <div>
+                      <div className="flex justify-between items-end mb-2">
+                        <h3 className="font-bold text-gray-800 dark:text-gray-100 ">蓝球区</h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500">至少选 {config.blue.count} 个</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {Array.from({length: config.blue.max}, (_, i) => i + 1).map(n => {
+                          const isSelected = manualBlues.includes(n);
+                          return (
+                            <button key={`m-b-${n}`} onClick={() => handleToggleManual('blue', n)} className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-sm border ${isSelected ? 'text-white border-transparent' : 'bg-[#f8f9fa] dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700'}`} style={isSelected ? { background: getGradient('blue', config.id) } : {}}>
+                              {formatNum(n, config.blue.max)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                   </div>
+                 )}
+                 
+                 {config.id === 'DLT' && (
+                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
+                       <span className="text-sm font-bold text-gray-700 dark:text-gray-200">追加投注 (3元/注)</span>
+                       <button onClick={() => setIsDltExtra(!isDltExtra)} className={`w-12 h-6 rounded-full p-1 transition-colors ${isDltExtra ? 'bg-blue-500' : 'bg-gray-200'}`}>
+                         <div className={`w-4 h-4 rounded-full bg-white dark:bg-slate-900 transition-transform ${isDltExtra ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                       </button>
+                    </div>
+                 )}
+              </>
+            )}
+          </div>
+        ) : (
+          <AnimatePresence>
           {sets.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex flex-col items-center justify-center h-64 text-gray-400"
+              className="flex flex-col items-center justify-center h-64 text-gray-400 dark:text-gray-500"
             >
               <Dices size={48} className="mb-4 opacity-50" />
               <p>点击下方按钮生成专属幸运号码</p>
@@ -255,86 +546,133 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave }: { selectedLott
                 key={idx}
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-gray-100 relative overflow-hidden"
+                className="bg-white dark:bg-slate-900 rounded-2xl py-5 px-4 sm:p-5 shadow-sm border border-gray-100 dark:border-slate-800 relative overflow-hidden flex items-center w-full"
               >
                 {/* Decorative background number */}
-                <div className="absolute -right-4 -top-4 text-9xl font-black text-gray-50 opacity-50 select-none pointer-events-none">
+                <div className="absolute right-0 -mr-2 text-8xl font-black text-gray-50 opacity-60 select-none pointer-events-none">
                   {idx + 1}
                 </div>
                 <div className="flex flex-wrap gap-2 relative z-10">
                   {set.reds.map((n, i) => (
-                    <Ball key={`r-${idx}-${i}`} num={n} color="red" max={config.red.max} />
+                    <Ball key={`r-${idx}-${i}`} num={n} color="red" max={config.red.max} lotteryId={config.id} />
                   ))}
                   {set.blues.map((n, i) => (
-                    <Ball key={`b-${idx}-${i}`} num={n} color="blue" max={config.blue.max} />
+                    <Ball key={`b-${idx}-${i}`} num={n} color="blue" max={config.blue.max} lotteryId={config.id} />
                   ))}
                 </div>
               </motion.div>
             ))
           )}
         </AnimatePresence>
+        )}
       </div>
 
       {/* Action Bar */}
-      <div className="bg-white border-t border-gray-100 p-4 pb-safe flex gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <button
-          onClick={() => handleGenerate(1)}
-          disabled={isGenerating}
-          className="flex-1 bg-gray-100 text-gray-800 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:bg-gray-200 transition-colors"
-        >
-          <RefreshCw size={18} className={isGenerating ? 'animate-spin' : ''} />
-          机选1注
-        </button>
-        <button
-          onClick={() => handleGenerate(5)}
-          disabled={isGenerating}
-          className={`flex-1 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md active:scale-[0.98] transition-all bg-gradient-to-r ${THEME_CLASSES[config.theme].gradient}`}
-        >
-          <Sparkles size={18} />
-          机选5注
-        </button>
-        {sets.length > 0 && (
-          <button
-            onClick={() => {
-              onSave(config.id, sets);
-              setSets([]);
-            }}
-            className="w-14 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-md active:scale-[0.98] transition-all"
-          >
-            <Save size={20} />
-          </button>
+      <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 p-4 pb-safe flex flex-col gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        {mode === 'manual' && !['FC3D', 'PL3', 'QXC'].includes(config.id) && (
+          <div className="flex justify-between items-center px-1">
+            <div className="text-sm text-gray-600 dark:text-gray-300">
+              <span className="font-bold mr-2 text-gray-800 dark:text-gray-100 ">{currentStrategy.playName}</span>
+              已选 <span className="text-red-500 font-bold">{manualReds.length}</span>红 
+              {config.blue.count > 0 && <> <span className="text-blue-500 font-bold">{manualBlues.length}</span>蓝</>}
+            </div>
+            <div className="text-sm">
+              共 <span className="font-bold text-gray-800 dark:text-gray-100 ">{combinations}</span> 注，
+              <span className="font-bold text-[#c0392b] text-base">{totalCost}</span> <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">元</span>
+            </div>
+          </div>
+        )}
+
+        {mode === 'manual' ? (
+          <div className="flex gap-3">
+            <button
+              onClick={() => { setManualReds([]); setManualBlues([]); }}
+              className="w-16 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold flex items-center justify-center hover:bg-gray-200 transition-all"
+            >
+              清空
+            </button>
+            <button
+              disabled={combinations === 0}
+              onClick={() => {
+                onSave(config.id, [{ reds: manualReds, blues: manualBlues }]);
+                setManualReds([]); setManualBlues([]);
+              }}
+              style={combinations > 0 ? { background: getGradient(config.theme, config.id) } : {}}
+              className={`flex-1 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all ${combinations === 0 ? 'bg-gray-300 opacity-50 cursor-not-allowed text-white/70' : 'hover:opacity-90 active:scale-[0.98]'}`}
+            >
+              <Save size={18} />
+              保存到号码本
+            </button>
+          </div>
+        ) : (
+          <div className="flex gap-3">
+            <button
+              onClick={() => handleGenerate(1)}
+              disabled={isGenerating}
+              className="flex-1 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-100 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:bg-gray-200 transition-colors"
+            >
+              <RefreshCw size={18} className={isGenerating ? 'animate-spin' : ''} />
+              机选1注
+            </button>
+            <button
+              onClick={() => handleGenerate(5)}
+              disabled={isGenerating}
+              style={{ background: getGradient(config.theme, config.id) }}
+              className={`flex-1 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:opacity-90 active:scale-[0.98] transition-all`}
+            >
+              <Sparkles size={18} />
+              机选5注
+            </button>
+            {sets.length > 0 && (
+              <button
+                onClick={() => {
+                  onSave(config.id, sets);
+                  setSets([]);
+                }}
+                className="w-14 bg-[#5eb47d] text-white rounded-xl flex items-center justify-center shadow-md hover:bg-[#4ea26c] active:scale-[0.98] transition-all"
+              >
+                <Save size={20} />
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>
   );
 };
 
-const ResultsView = ({ mockResults }: { mockResults: Record<string, any[]> }) => {
+const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) => {
   const [selectedLottery, setSelectedLottery] = useState<LotteryId>('SSQ');
   const config = LOTTERIES.find(l => l.id === selectedLottery)!;
-  const results = mockResults[selectedLottery];
+  const results = resultsData[selectedLottery] || [];
 
   return (
-    <div className="flex flex-col h-full bg-gray-50">
-      <div className="bg-white pt-10 pb-4 px-4 shadow-sm z-10 sticky top-0">
-        <h1 className="text-xl font-bold text-center text-gray-800 mb-4">历史开奖</h1>
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
+      <div className="bg-white dark:bg-slate-900 pt-10 pb-4 px-4 shadow-sm z-10 sticky top-0">
+        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">历史开奖</h1>
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
           {LOTTERIES.map(l => (
             <button
               key={l.id}
               onClick={() => setSelectedLottery(l.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
-                ${l.id === selectedLottery ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 text-gray-600'}`}
+                ${l.id === selectedLottery ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300'}`}
             >
               {l.name}
             </button>
           ))}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {results.map((res, idx) => (
-          <ResultCard key={idx} lottery={config} result={res} />
-        ))}
+      <div className="flex-1 overflow-y-auto bg-[#f5f5f5] dark:bg-slate-950 p-0 sm:p-4 space-y-0 sm:space-y-3">
+        {results.length === 0 ? (
+           <div className="p-8 m-4 text-center text-gray-400 dark:text-gray-500 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse">正在加载历史数据...</div>
+        ) : (
+          <div className="flex flex-col border-y sm:border-0 border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800 sm:divide-y-0">
+            {results.map((res, idx) => (
+              <ResultCard key={idx} lottery={config} result={res} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -342,10 +680,10 @@ const ResultsView = ({ mockResults }: { mockResults: Record<string, any[]> }) =>
 
 const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void }) => {
   return (
-    <div className="flex flex-col h-full bg-gray-50">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-16 pb-12 px-6 shadow-lg">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center border-2 border-white/20">
+          <div className="w-16 h-16 bg-white dark:bg-slate-900 /10 rounded-full flex items-center justify-center border-2 border-white/20">
             <User size={32} className="text-white" />
           </div>
           <div>
@@ -357,24 +695,24 @@ const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[
 
       <div className="flex-1 overflow-y-auto p-4 -mt-6 relative z-10">
         {savedTickets.length === 0 ? (
-          <div className="bg-white rounded-2xl p-8 text-center shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-slate-800">
             <History size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500">暂无保存的号码</p>
-            <p className="text-sm text-gray-400 mt-1">去选号页面生成并保存吧</p>
+            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">暂无保存的号码</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">去选号页面生成并保存吧</p>
           </div>
         ) : (
           <div className="space-y-4">
             {savedTickets.map(ticket => {
               const config = LOTTERIES.find(l => l.id === ticket.lotteryId)!;
               return (
-                <div key={ticket.id} className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-                  <div className="flex justify-between items-center mb-3 border-b border-gray-50 pb-3">
+                <div key={ticket.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-800">
+                  <div className="flex justify-between items-center mb-3 border-b border-gray-50 dark:border-slate-800 pb-3">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${THEME_CLASSES[config.theme].bg}`}></span>
-                      <span className="font-bold text-gray-800">{config.name}</span>
-                      <span className="text-xs text-gray-400">{new Date(ticket.date).toLocaleDateString()}</span>
+                      <span className="font-bold text-gray-800 dark:text-gray-100 ">{config.name}</span>
+                      <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(ticket.date).toLocaleDateString()}</span>
                     </div>
-                    <button onClick={() => onDeleteTicket(ticket.id)} className="text-gray-400 hover:text-red-500 transition-colors p-1">
+                    <button onClick={() => onDeleteTicket(ticket.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors p-1">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -406,8 +744,11 @@ const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[
 
 // --- Main App ---
 export default function App() {
+  const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState('home');
   const [pickLotteryId, setPickLotteryId] = useState<LotteryId>('SSQ');
+  const [resultsData, setResultsData] = useState<Record<string, any[]>>({});
+  
   const [savedTickets, setSavedTickets] = useState<SavedTicket[]>(() => {
     try {
       const saved = localStorage.getItem('lottery_tickets');
@@ -417,6 +758,69 @@ export default function App() {
     }
   });
   const [toast, setToast] = useState({ visible: false, message: '' });
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Initial Data Fetching & Caching strategy
+  useEffect(() => {
+    const loadData = async () => {
+      // 1. Try to load cached data from localStorage
+      let cachedData: Record<string, any[]> = {};
+      try {
+        const stored = localStorage.getItem('lottery_history_data');
+        if (stored) cachedData = JSON.parse(stored);
+      } catch (e) {
+        console.warn('Failed to parse cached history data');
+      }
+
+      // 2. Set initial state quickly if cache exists
+      if (Object.keys(cachedData).length > 0) {
+        setResultsData(cachedData); 
+      }
+
+      // 3. Fetch latest official data and merge with cache
+      const latestDataMapping: Record<string, any[]> = { ...cachedData };
+      let hasUpdates = false;
+
+      await Promise.all(
+        LOTTERIES.map(async (l) => {
+          try {
+            const fetched = await fetchRealData(l.id);
+            if (fetched && fetched.length > 0) {
+              const existingList = latestDataMapping[l.id] || [];
+              const combinedMap = new Map();
+              
+              // First map existing cache
+              existingList.forEach((item: any) => combinedMap.set(item.issue, item));
+              // Then overwrite/add with latest network data (preferring recent)
+              fetched.forEach((item: any) => combinedMap.set(item.issue, item));
+              
+              // Map to array, sort by issue descending
+              const mergedList = Array.from(combinedMap.values()).sort((a, b) => {
+                 // basic string comparison handles issue numbers usually (e.g., '2023001' vs '2023002')
+                 return String(b.issue).localeCompare(String(a.issue));
+              });
+
+              latestDataMapping[l.id] = mergedList;
+              hasUpdates = true;
+            }
+          } catch (e) {
+            console.error(`Error updating data for ${l.id}`, e);
+          }
+        })
+      );
+
+      // 4. Update state and save merged data back to storage if there were network successes
+      if (hasUpdates) {
+        setResultsData(latestDataMapping);
+        localStorage.setItem('lottery_history_data', JSON.stringify(latestDataMapping));
+      }
+    };
+    loadData();
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('lottery_tickets', JSON.stringify(savedTickets));
@@ -451,49 +855,62 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-900 flex justify-center">
-      <div className="w-full max-w-md bg-white min-h-screen shadow-2xl relative flex flex-col overflow-hidden">
-        
-        {/* Content Area */}
-        <div className="flex-1 overflow-hidden relative">
-          <AnimatePresence mode="wait">
+    <div className="min-h-screen bg-gray-900 dark:bg-black flex justify-center overflow-hidden">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative flex flex-col overflow-hidden">
+        <AnimatePresence mode="wait">
+          {showSplash ? (
+            <SplashScreen key="splash" />
+          ) : (
             <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="absolute inset-0"
+              key="main-app"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.4 }}
+              className="w-full h-full flex flex-col absolute inset-0"
             >
-              {activeTab === 'home' && <HomeView onNavigate={(tab, id) => { if (id) setPickLotteryId(id); setActiveTab(tab); }} mockResults={mockResults} />}
-              {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} />}
-              {activeTab === 'results' && <ResultsView mockResults={mockResults} />}
-              {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} />}
+              {/* Content Area */}
+              <div className="flex-1 overflow-hidden relative">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute inset-0"
+                  >
+                    {activeTab === 'home' && <HomeView onNavigate={(tab, id) => { if (id) setPickLotteryId(id); setActiveTab(tab); }} resultsData={resultsData} />}
+                    {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} resultsData={resultsData} />}
+                    {activeTab === 'results' && <ResultsView resultsData={resultsData} />}
+                    {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} />}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+
+              {/* Bottom Navigation */}
+              <nav className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 flex justify-around items-center h-16 pb-safe z-50 shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.05)]">
+                {NAV_ITEMS.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveTab(item.id)}
+                      className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors
+                        ${isActive ? 'text-blue-600' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300'}`}
+                    >
+                      <Icon size={24} className={isActive ? 'fill-blue-50 text-blue-600' : ''} />
+                      <span className="text-[10px] font-medium">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              {/* Global Toast */}
+              <Toast message={toast.message} visible={toast.visible} />
             </motion.div>
-          </AnimatePresence>
-        </div>
-
-        {/* Bottom Navigation */}
-        <nav className="bg-white border-t border-gray-100 flex justify-around items-center h-16 pb-safe z-50 shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.05)]">
-          {NAV_ITEMS.map(item => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                className={`flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors
-                  ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`}
-              >
-                <Icon size={24} className={isActive ? 'fill-blue-50 text-blue-600' : ''} />
-                <span className="text-[10px] font-medium">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* Global Toast */}
-        <Toast message={toast.message} visible={toast.visible} />
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
