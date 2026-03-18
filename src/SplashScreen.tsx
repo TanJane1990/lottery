@@ -16,14 +16,9 @@ export const SplashScreen = () => {
         initial={{ scale: 0.5, opacity: 0, rotate: -15 }}
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
         transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
-        className="w-28 h-28 bg-red-500 rounded-[2rem] flex items-center justify-center shadow-2xl shadow-red-500/40 mb-6 relative overflow-hidden"
+        className="w-28 h-28 mb-6 relative flex items-center justify-center"
       >
-        {/* Logo 高光效果 */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent"></div>
-        {/* 内部图标 */}
-        <div className="w-full h-full rounded-[2rem] flex items-center justify-center shadow-inner overflow-hidden">
-          <img src="./icons/tb.png" alt="App Icon" className="w-full h-full object-cover" />
-        </div>
+        <img src="./icons/tb.png" alt="App Icon" className="w-full h-full object-contain drop-shadow-2xl" />
       </motion.div>
       
       {/* 主标题动画：向上浮现 */}
