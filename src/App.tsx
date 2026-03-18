@@ -356,7 +356,7 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
   return (
     <div className="pb-6">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,32px)+16px)] pb-16 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,44px)+28px)] pb-16 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
           <Trophy size={200} />
         </div>

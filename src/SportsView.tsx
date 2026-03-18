@@ -114,64 +114,91 @@ const calculateParlay = (
 
 // --- Data Fetching ---
 const fetchFootballMatches = async (): Promise<SportsMatch[]> => {
-  try {
-    const url = 'https://webapi.sporttery.cn/gateway/jc/football/getMatchCalculatorV1.qry?poolCode=hhad,had&channel=c_web&is498=N';
-    const response = await CapacitorHttp.request({ url, method: 'GET' });
-    const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
-    if (!data?.value?.matchInfoList) return [];
-    return data.value.matchInfoList.slice(0, 50).map((match: any) => {
-      const subMatch = match.subMatchList?.[0];
-      const hadOdds = subMatch?.hadList || subMatch?.hhadList;
-      const hhad = subMatch?.hhadList;
-      return {
-        id: match.matchId || String(Math.random()),
-        matchNum: match.matchNumStr || match.matchNum || '',
-        leagueName: match.leagueNameAbbr || match.leagueName || '未知联赛',
-        leagueColor: getLeagueColor(match.leagueNameAbbr || match.leagueName || ''),
-        homeTeam: match.homeTeamAbbName || match.homeTeamName || '主队',
-        awayTeam: match.awayTeamAbbName || match.awayTeamName || '客队',
-        matchTime: match.matchTime ? match.matchTime.substring(11, 16) : '--:--',
-        matchDate: match.matchTime ? match.matchTime.substring(0, 10) : '',
-        status: match.sellStatus === 'OnSale' ? 'selling' : match.sellStatus === 'SoldOut' ? 'closed' : 'upcoming',
-        odds: { win: hadOdds?.[0]?.a || '-', draw: hadOdds?.[0]?.d || '-', lose: hadOdds?.[0]?.h || '-' },
-        handicap: hhad?.[0]?.fixedodds || '',
-      };
-    });
-  } catch (e) {
-    console.warn('Fetch football matches failed', e);
-    return generateMockFootball();
+  const urls = [
+    'https://webapi.sporttery.cn/gateway/jc/football/getMatchCalculatorV1.qry?poolCode=had,hhad&channel=c_web&is498=N',
+    'https://webapi.sporttery.cn/gateway/jc/football/getMatchCalculatorV1.qry?poolCode=hhad,had,crs,ttg,hafu&channel=c_web',
+  ];
+  
+  for (const url of urls) {
+    try {
+      const response = await CapacitorHttp.request({ url, method: 'GET', connectTimeout: 8000, readTimeout: 8000 });
+      const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+      const list = data?.value?.matchInfoList;
+      if (!list || !Array.isArray(list) || list.length === 0) continue;
+      
+      const results = list.slice(0, 50).map((match: any) => {
+        const subMatch = match.subMatchList?.[0];
+        const hadOdds = subMatch?.hadList?.[0] || subMatch?.hhadList?.[0];
+        const hhad = subMatch?.hhadList?.[0];
+        const leagueName = match.leagueNameAbbr || match.leagueName || '';
+        const homeTeam = match.homeTeamAbbName || match.homeTeamName || '';
+        const awayTeam = match.awayTeamAbbName || match.awayTeamName || '';
+        if (!homeTeam || !awayTeam) return null;
+        return {
+          id: match.matchId || String(Math.random()),
+          matchNum: match.matchNumStr || match.matchNum || '',
+          leagueName: leagueName || '未知',
+          leagueColor: getLeagueColor(leagueName),
+          homeTeam, awayTeam,
+          matchTime: match.matchTime ? match.matchTime.substring(11, 16) : '--:--',
+          matchDate: match.matchTime ? match.matchTime.substring(0, 10) : new Date().toISOString().split('T')[0],
+          status: match.sellStatus === 'OnSale' ? 'selling' as const : match.sellStatus === 'SoldOut' ? 'closed' as const : 'upcoming' as const,
+          odds: { win: hadOdds?.a || '-', draw: hadOdds?.d || '-', lose: hadOdds?.h || '-' },
+          handicap: hhad?.fixedodds || '',
+        };
+      }).filter(Boolean) as SportsMatch[];
+      
+      if (results.length > 0) return results;
+    } catch (e) {
+      console.warn(`Fetch football from ${url} failed`, e);
+    }
   }
+  // All API attempts failed, use mock
+  return generateMockFootball();
 };
 
 const fetchBasketballMatches = async (): Promise<SportsMatch[]> => {
-  try {
-    const url = 'https://webapi.sporttery.cn/gateway/jc/basketball/getMatchCalculatorV1.qry?poolCode=mnl,hdc&channel=c_web';
-    const response = await CapacitorHttp.request({ url, method: 'GET' });
-    const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
-    if (!data?.value?.matchInfoList) return [];
-    return data.value.matchInfoList.slice(0, 50).map((match: any) => {
-      const subMatch = match.subMatchList?.[0];
-      const mnlOdds = subMatch?.mnlList;
-      const hdcOdds = subMatch?.hdcList;
-      return {
-        id: match.matchId || String(Math.random()),
-        matchNum: match.matchNumStr || match.matchNum || '',
-        leagueName: match.leagueNameAbbr || match.leagueName || '未知联赛',
-        leagueColor: getLeagueColor(match.leagueNameAbbr || match.leagueName || ''),
-        homeTeam: match.homeTeamAbbName || match.homeTeamName || '主队',
-        awayTeam: match.awayTeamAbbName || match.awayTeamName || '客队',
-        matchTime: match.matchTime ? match.matchTime.substring(11, 16) : '--:--',
-        matchDate: match.matchTime ? match.matchTime.substring(0, 10) : '',
-        status: match.sellStatus === 'OnSale' ? 'selling' : match.sellStatus === 'SoldOut' ? 'closed' : 'upcoming',
-        odds: { win: mnlOdds?.[0]?.a || hdcOdds?.[0]?.a || '-', lose: mnlOdds?.[0]?.h || hdcOdds?.[0]?.h || '-' },
-        handicap: hdcOdds?.[0]?.fixedodds || '',
-        totalPoints: subMatch?.hilo?.[0]?.fixedodds || '',
-      };
-    });
-  } catch (e) {
-    console.warn('Fetch basketball matches failed', e);
-    return generateMockBasketball();
+  const urls = [
+    'https://webapi.sporttery.cn/gateway/jc/basketball/getMatchCalculatorV1.qry?poolCode=mnl,hdc&channel=c_web',
+    'https://webapi.sporttery.cn/gateway/jc/basketball/getMatchCalculatorV1.qry?poolCode=hdc,mnl,hilo,wnm&channel=c_web',
+  ];
+  
+  for (const url of urls) {
+    try {
+      const response = await CapacitorHttp.request({ url, method: 'GET', connectTimeout: 8000, readTimeout: 8000 });
+      const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
+      const list = data?.value?.matchInfoList;
+      if (!list || !Array.isArray(list) || list.length === 0) continue;
+      
+      const results = list.slice(0, 50).map((match: any) => {
+        const subMatch = match.subMatchList?.[0];
+        const mnlOdds = subMatch?.mnlList?.[0];
+        const hdcOdds = subMatch?.hdcList?.[0];
+        const leagueName = match.leagueNameAbbr || match.leagueName || '';
+        const homeTeam = match.homeTeamAbbName || match.homeTeamName || '';
+        const awayTeam = match.awayTeamAbbName || match.awayTeamName || '';
+        if (!homeTeam || !awayTeam) return null;
+        return {
+          id: match.matchId || String(Math.random()),
+          matchNum: match.matchNumStr || match.matchNum || '',
+          leagueName: leagueName || '未知',
+          leagueColor: getLeagueColor(leagueName),
+          homeTeam, awayTeam,
+          matchTime: match.matchTime ? match.matchTime.substring(11, 16) : '--:--',
+          matchDate: match.matchTime ? match.matchTime.substring(0, 10) : new Date().toISOString().split('T')[0],
+          status: match.sellStatus === 'OnSale' ? 'selling' as const : match.sellStatus === 'SoldOut' ? 'closed' as const : 'upcoming' as const,
+          odds: { win: mnlOdds?.a || hdcOdds?.a || '-', lose: mnlOdds?.h || hdcOdds?.h || '-' },
+          handicap: hdcOdds?.fixedodds || '',
+          totalPoints: subMatch?.hilo?.[0]?.fixedodds || '',
+        };
+      }).filter(Boolean) as SportsMatch[];
+      
+      if (results.length > 0) return results;
+    } catch (e) {
+      console.warn(`Fetch basketball from ${url} failed`, e);
+    }
   }
+  return generateMockBasketball();
 };
 
 // --- Mock Data ---
