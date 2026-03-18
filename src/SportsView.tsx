@@ -113,6 +113,17 @@ const calculateParlay = (
 };
 
 // --- Data Fetching ---
+const BROWSER_HEADERS: Record<string, string> = {
+  'User-Agent': 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+  'Accept': 'application/json, text/javascript, */*; q=0.01',
+  'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+  'Referer': 'https://www.sporttery.cn/jc/jsq/zqspf/',
+  'Origin': 'https://www.sporttery.cn',
+  'X-Requested-With': 'XMLHttpRequest',
+  'Cache-Control': 'no-cache',
+  'Pragma': 'no-cache',
+};
+
 const fetchFootballMatches = async (): Promise<SportsMatch[]> => {
   const urls = [
     'https://webapi.sporttery.cn/gateway/jc/football/getMatchCalculatorV1.qry?poolCode=had,hhad&channel=c_web&is498=N',
@@ -121,7 +132,7 @@ const fetchFootballMatches = async (): Promise<SportsMatch[]> => {
   
   for (const url of urls) {
     try {
-      const response = await CapacitorHttp.request({ url, method: 'GET', connectTimeout: 8000, readTimeout: 8000 });
+      const response = await CapacitorHttp.request({ url, method: 'GET', headers: BROWSER_HEADERS, connectTimeout: 8000, readTimeout: 8000 });
       const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
       const list = data?.value?.matchInfoList;
       if (!list || !Array.isArray(list) || list.length === 0) continue;
@@ -165,7 +176,7 @@ const fetchBasketballMatches = async (): Promise<SportsMatch[]> => {
   
   for (const url of urls) {
     try {
-      const response = await CapacitorHttp.request({ url, method: 'GET', connectTimeout: 8000, readTimeout: 8000 });
+      const response = await CapacitorHttp.request({ url, method: 'GET', headers: BROWSER_HEADERS, connectTimeout: 8000, readTimeout: 8000 });
       const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
       const list = data?.value?.matchInfoList;
       if (!list || !Array.isArray(list) || list.length === 0) continue;
