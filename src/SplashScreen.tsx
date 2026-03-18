@@ -20,9 +20,9 @@ export const SplashScreen = () => {
       >
         {/* Logo 高光效果 */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-transparent"></div>
-        {/* 内部白色圆圈与文字 */}
-        <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-inner">
-          <span className="text-4xl font-bold text-red-500 font-sans">彩</span>
+        {/* 内部图标 */}
+        <div className="w-full h-full rounded-[2rem] flex items-center justify-center shadow-inner overflow-hidden">
+          <img src="/icons/tb.png" alt="App Icon" className="w-full h-full object-cover" />
         </div>
       </motion.div>
       
