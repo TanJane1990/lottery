@@ -277,7 +277,7 @@ export const fetchRealData = async (id: LotteryId, page: number = 1, pageSize: n
 // 红redCircle 蓝blueCircle 黄yellowCircle 紫purpleCircle 粉pinkCircle
 // 双色球(SSQ): 红+蓝, 大乐透(DLT): 蓝+黄
 // 福彩3D(FC3D): 紫, 排列3(PL3): 粉
-// 七乐彩(QLC): 红+蓝, 七星彩(QXC): 蓝+蓝
+// 七乐彩(QLC): 红+蓝, 七星彩(QXC): 蓝+黄
 const getBallImage = (color: 'red' | 'blue', lotteryId?: LotteryId | null): string => {
   switch (lotteryId) {
     case 'SSQ': // 双色球：红球 + 蓝球
@@ -286,8 +286,8 @@ const getBallImage = (color: 'red' | 'blue', lotteryId?: LotteryId | null): stri
       return color === 'red' ? './balls/blueCircle.png' : './balls/yellowCircle.png';
     case 'QLC': // 七乐彩：红球 + 蓝球
       return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
-    case 'QXC': // 七星彩：蓝球 + 蓝球
-      return './balls/blueCircle.png';
+    case 'QXC': // 七星彩：前6蓝球 + 后1黄球
+      return color === 'red' ? './balls/blueCircle.png' : './balls/yellowCircle.png';
     case 'FC3D': // 福彩3D：紫球
       return './balls/purpleCircle.png';
     case 'PL3': // 排列3：粉球
