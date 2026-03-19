@@ -482,14 +482,15 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+20px)] pb-2 px-4 shadow-sm z-10 sticky top-0">
+      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+36px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
+        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
         {/* Lottery Tabs */}
-        <div className="flex overflow-x-auto hide-scrollbar gap-1.5 pb-1.5">
+        <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
           {LOTTERIES.map(l => (
             <button
               key={l.id}
               onClick={() => { onSelectLottery(l.id); setSets([]); }}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
                 ${l.id === selectedLotteryId ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300'}`}
             >
               {l.name}
@@ -498,14 +499,14 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
         </div>
         
         {/* Mode Selector */}
-        <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-0.5 mt-1.5">
-          <button onClick={() => setMode('smart')} className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100 ' : 'text-gray-500 dark:text-gray-400'}`}>智能机选</button>
-          <button onClick={() => setMode('manual')} className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${mode === 'manual' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100 ' : 'text-gray-500 dark:text-gray-400'}`}>手选 / 复式</button>
+        <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1 mx-2 mb-2 mt-2">
+          <button onClick={() => setMode('smart')} className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>智能机选</button>
+          <button onClick={() => setMode('manual')} className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${mode === 'manual' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>手选 / 复式</button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
         {mode === 'manual' ? (
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-800">
             {['FC3D', 'PL3', 'QXC'].includes(config.id) ? (
@@ -577,13 +578,13 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                 key={idx}
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                className="bg-white dark:bg-slate-900 rounded-2xl py-5 px-4 sm:p-5 shadow-sm border border-gray-100 dark:border-slate-800 relative overflow-hidden flex items-center w-full"
+                className="bg-white dark:bg-slate-900 rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative overflow-hidden flex items-center w-full"
               >
                 {/* Decorative background number */}
-                <div className="absolute right-0 -mr-2 text-8xl font-black text-gray-50 opacity-60 select-none pointer-events-none">
+                <div className="absolute right-0 -mr-2 text-7xl font-black text-gray-50 dark:text-gray-800 opacity-60 select-none pointer-events-none">
                   {idx + 1}
                 </div>
-                <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 relative z-10 w-full overflow-x-auto hide-scrollbar py-2">
+                <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 relative z-10 w-full overflow-x-auto hide-scrollbar py-0.5">
                   {set.reds.map((n, i) => (
                     <Ball key={`r-${idx}-${i}`} num={n} color="red" max={config.red.max} lotteryId={config.id} />
                   ))}
