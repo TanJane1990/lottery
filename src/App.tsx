@@ -200,8 +200,8 @@ const generateMockResults = () => {
 };
 const MOCK_RESULTS = generateMockResults();
 
-const fetchSporttery = async (gameNo: string, pageNo: number = 1) => {
-  const url = `https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=${gameNo}&provinceId=0&pageSize=100&isVerify=1&pageNo=${pageNo}`;
+const fetchSporttery = async (gameNo: string, pageNo: number = 1, pageSize: number = 100) => {
+  const url = `https://webapi.sporttery.cn/gateway/lottery/getHistoryPageListV1.qry?gameNo=${gameNo}&provinceId=0&pageSize=${pageSize}&isVerify=1&pageNo=${pageNo}`;
   try {
     const response = await CapacitorHttp.request({ url, method: 'GET' });
     const data = typeof response.data === 'string' ? JSON.parse(response.data) : response.data;
@@ -227,8 +227,8 @@ const fetchSporttery = async (gameNo: string, pageNo: number = 1) => {
   }
 };
 
-const fetchCWL = async (name: string, pageNo: number = 1) => {
-  const url = `https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=${name}&pageNo=${pageNo}&pageSize=100`;
+const fetchCWL = async (name: string, pageNo: number = 1, pageSize: number = 100) => {
+  const url = `https://www.cwl.gov.cn/cwl_admin/front/cwlkj/search/kjxx/findDrawNotice?name=${name}&pageNo=${pageNo}&pageSize=${pageSize}`;
   try {
     const response = await CapacitorHttp.request({ 
       url, 
@@ -256,15 +256,15 @@ const fetchCWL = async (name: string, pageNo: number = 1) => {
   }
 };
 
-export const fetchRealData = async (id: LotteryId, page: number = 1) => {
+export const fetchRealData = async (id: LotteryId, page: number = 1, pageSize: number = 100) => {
   try {
-    if (id === 'DLT') return await fetchSporttery('85', page);
-    if (id === 'PL3') return await fetchSporttery('35', page);
-    if (id === 'QXC') return await fetchSporttery('04', page);
+    if (id === 'DLT') return await fetchSporttery('85', page, pageSize);
+    if (id === 'PL3') return await fetchSporttery('35', page, pageSize);
+    if (id === 'QXC') return await fetchSporttery('04', page, pageSize);
     
-    if (id === 'SSQ') return await fetchCWL('ssq', page);
-    if (id === 'FC3D') return await fetchCWL('3d', page);
-    if (id === 'QLC') return await fetchCWL('qlc', page);
+    if (id === 'SSQ') return await fetchCWL('ssq', page, pageSize);
+    if (id === 'FC3D') return await fetchCWL('3d', page, pageSize);
+    if (id === 'QLC') return await fetchCWL('qlc', page, pageSize);
   } catch (e) {
     console.log(`Failed to fetch ${id} page ${page}`);
     return [];
@@ -877,7 +877,8 @@ export default function App() {
       await Promise.all(
         LOTTERIES.map(async (l) => {
           try {
-            const fetched = await fetchRealData(l.id);
+            // Only fetch the latest 20 results on startup to prevent UI lag
+            const fetched = await fetchRealData(l.id, 1, 20);
             if (fetched && fetched.length > 0) {
               const existingList = latestDataMapping[l.id] || [];
               const combinedMap = new Map();
@@ -908,33 +909,48 @@ export default function App() {
         localStorage.setItem('lottery_history_data', JSON.stringify(latestDataMapping));
       }
 
-      // 5. Background Sync: if we don't have enough history, fetch all past pages quietly
+      // 5. Background Sync: if we haven't completed history sync, fetch all past pages quietly
       const syncHistoricalData = async () => {
         let isUpdated = false;
         let dataMap = { ...latestDataMapping }; // copy
         
         for (const l of LOTTERIES) {
-          if (['FC3D', 'PL3', 'PL5'].includes(l.id)) continue; // Keep these simple, skip deep history
+          if (['FC3D', 'PL3', 'PL5'].includes(l.id)) continue;
 
-          const currentCount = dataMap[l.id]?.length || 0;
-          if (currentCount > 1000) continue; // Already synced history
+          // Check if we permanently marked this lottery as fully synced
+          const syncKey = `lottery_synced_full_${l.id}`;
+          if (localStorage.getItem(syncKey) === 'true') continue;
           
           let pageNo = 2;
           let emptyCount = 0;
+          let newRecordsCount = 0;
           
           while (emptyCount < 2 && pageNo <= 35) { // Protect against infinite loop, max ~3500 records
             try {
-              const fetched = await fetchRealData(l.id, pageNo);
+              // Always fetch history with pageSize=100
+              const fetched = await fetchRealData(l.id, pageNo, 100);
               if (fetched && fetched.length > 0) {
                 const combinedMap = new Map();
                 (dataMap[l.id] || []).forEach((item: any) => combinedMap.set(item.issue, item));
-                fetched.forEach((item: any) => combinedMap.set(item.issue, item));
                 
-                dataMap[l.id] = Array.from(combinedMap.values()).sort((a, b) => {
-                  return String(b.issue).localeCompare(String(a.issue));
+                let newlyAddedCount = 0;
+                fetched.forEach((item: any) => {
+                   if (!combinedMap.has(item.issue)) {
+                       newlyAddedCount++;
+                   }
+                   combinedMap.set(item.issue, item);
                 });
-                isUpdated = true;
-                emptyCount = 0; // reset
+                
+                dataMap[l.id] = Array.from(combinedMap.values()).sort((a, b) => String(b.issue).localeCompare(String(a.issue)));
+                
+                if (newlyAddedCount > 0) {
+                   isUpdated = true;
+                   newRecordsCount += newlyAddedCount;
+                   emptyCount = 0; // reset
+                } else {
+                   // If we pulled 100 items but ALL were already in our DB, we've likely hit the bottom
+                   emptyCount++;
+                }
               } else {
                 emptyCount++; // end of data or error
               }
@@ -942,15 +958,17 @@ export default function App() {
                emptyCount++;
             }
             pageNo++;
-            // Small delay to prevent freezing UI and DDOSing official site
             await new Promise(r => setTimeout(r, 1500));
             
-            // Progressive save & update state every 5 pages
             if (isUpdated && pageNo % 5 === 0) {
                setResultsData({ ...dataMap });
                localStorage.setItem('lottery_history_data', JSON.stringify(dataMap));
             }
           }
+          
+          // Once the while loop ends, it means we reached the earliest recorded page or hit rate limits
+          // We mark it as fully synced so it never slows down startup again
+          localStorage.setItem(syncKey, 'true');
         }
         
         // Final save
