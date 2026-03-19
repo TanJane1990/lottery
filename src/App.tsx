@@ -482,15 +482,14 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+36px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
-        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
+      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+20px)] pb-2 px-4 shadow-sm z-10 sticky top-0">
         {/* Lottery Tabs */}
-        <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
+        <div className="flex overflow-x-auto hide-scrollbar gap-1.5 pb-1.5">
           {LOTTERIES.map(l => (
             <button
               key={l.id}
               onClick={() => { onSelectLottery(l.id); setSets([]); }}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
+              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all
                 ${l.id === selectedLotteryId ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300'}`}
             >
               {l.name}
@@ -499,9 +498,9 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
         </div>
         
         {/* Mode Selector */}
-        <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1 mx-2 mb-2 mt-2">
-          <button onClick={() => setMode('smart')} className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100 ' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>智能机选</button>
-          <button onClick={() => setMode('manual')} className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${mode === 'manual' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100 ' : 'text-gray-500 dark:text-gray-400 dark:text-gray-500'}`}>手选 / 复式</button>
+        <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-0.5 mt-1.5">
+          <button onClick={() => setMode('smart')} className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100 ' : 'text-gray-500 dark:text-gray-400'}`}>智能机选</button>
+          <button onClick={() => setMode('manual')} className={`flex-1 py-1 text-xs font-bold rounded-md transition-all ${mode === 'manual' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100 ' : 'text-gray-500 dark:text-gray-400'}`}>手选 / 复式</button>
         </div>
       </div>
 
