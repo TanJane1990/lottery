@@ -273,17 +273,27 @@ export const fetchRealData = async (id: LotteryId) => {
 };
 
 // --- Components ---
-// Ball image paths: SSQ=red+blue, DLT=blue+yellow, others use gradients
-const getBallImage = (color: 'red' | 'blue', lotteryId?: LotteryId | null): string | null => {
-  if (lotteryId === 'SSQ') {
-    return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
+// Ball image paths based on official lottery colors
+// 双色球(SSQ): 红球+蓝球, 大乐透(DLT): 蓝球+黄球
+// 福彩3D(FC3D): 红球, 排列3(PL3): 红球
+// 七乐彩(QLC): 红球+蓝球, 七星彩(QXC): 蓝球+蓝球
+const getBallImage = (color: 'red' | 'blue', lotteryId?: LotteryId | null): string => {
+  switch (lotteryId) {
+    case 'SSQ': // 双色球：红球 + 蓝球
+      return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
+    case 'DLT': // 大乐透：蓝球 + 黄球
+      return color === 'red' ? './balls/blueCircle.png' : './balls/yellowCircle.png';
+    case 'QLC': // 七乐彩：红球 + 蓝球
+      return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
+    case 'QXC': // 七星彩：蓝球 + 蓝球
+      return './balls/blueCircle.png';
+    case 'FC3D': // 福彩3D：红球
+      return './balls/redCircle.png';
+    case 'PL3': // 排列3：红球
+      return './balls/redCircle.png';
+    default:
+      return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
   }
-  if (lotteryId === 'DLT') {
-    return color === 'red' ? './balls/blueCircle.png' : './balls/yellowCircle.png';
-  }
-  // FC3D, PL3 etc - use red ball for all
-  if (color === 'red') return './balls/redCircle.png';
-  return './balls/blueCircle.png';
 };
 
 const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryId?: LotteryId }> = ({ num, color, max, lotteryId }) => {
@@ -294,15 +304,14 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryI
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className="relative w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10"
+        className="relative w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 z-10"
         style={{
-          backgroundImage: ballImg ? `url(${ballImg})` : undefined,
+          backgroundImage: `url(${ballImg})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
-          background: ballImg ? undefined : getGradient(color, lotteryId),
         }}
       >
-        <span className="relative z-10" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)', fontSize: '24px', lineHeight: '48px' }}>{formatNum(num, max)}</span>
+        <span className="relative z-10" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)', fontSize: '16px', lineHeight: '40px' }}>{formatNum(num, max)}</span>
       </motion.div>
     </div>
   );
@@ -322,22 +331,16 @@ const ResultCard: React.FC<{ lottery: LotteryConfig, result: any }> = ({ lottery
            {result.pool && <span className="text-gray-600 dark:text-gray-300 whitespace-nowrap">奖池累计金额：<span className="text-[#c0392b] font-bold">￥{result.pool}元</span></span>}
          </div>
          <div className="flex flex-wrap gap-1.5 sm:gap-2">
-            {result.reds.map((n: number, i: number) => {
-              const img = getBallImage('red', lottery.id);
-              return (
-                <div key={`r-${i}`} className="w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-xs" style={{ backgroundImage: img ? `url(${img})` : undefined, backgroundSize: 'cover', background: img ? undefined : getGradient('red', lottery.id) }}>
-                  <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.red.max)}</span>
-                </div>
-              );
-            })}
-            {result.blues.map((n: number, i: number) => {
-              const img = getBallImage('blue', lottery.id);
-              return (
-                <div key={`b-${i}`} className="w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-xs" style={{ backgroundImage: img ? `url(${img})` : undefined, backgroundSize: 'cover', background: img ? undefined : getGradient('blue', lottery.id) }}>
-                  <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.blue.max)}</span>
-                </div>
-              );
-            })}
+            {result.reds.map((n: number, i: number) => (
+              <div key={`r-${i}`} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: 'cover' }}>
+                <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.red.max)}</span>
+              </div>
+            ))}
+            {result.blues.map((n: number, i: number) => (
+              <div key={`b-${i}`} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: 'cover' }}>
+                <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.blue.max)}</span>
+              </div>
+            ))}
          </div>
       </div>
 
