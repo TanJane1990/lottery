@@ -925,7 +925,7 @@ export default function App() {
           let emptyCount = 0;
           let newRecordsCount = 0;
           
-          while (emptyCount < 2 && pageNo <= 35) { // Protect against infinite loop, max ~3500 records
+          while (emptyCount < 2 && pageNo <= 100) { // Protect against infinite loop, max ~10,000 records (enough for decades of history)
             try {
               // Always fetch history with pageSize=100
               const fetched = await fetchRealData(l.id, pageNo, 100);
