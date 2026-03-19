@@ -273,23 +273,37 @@ export const fetchRealData = async (id: LotteryId) => {
 };
 
 // --- Components ---
+// Ball image paths: SSQ=red+blue, DLT=blue+yellow, others use gradients
+const getBallImage = (color: 'red' | 'blue', lotteryId?: LotteryId | null): string | null => {
+  if (lotteryId === 'SSQ') {
+    return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
+  }
+  if (lotteryId === 'DLT') {
+    return color === 'red' ? './balls/blueCircle.png' : './balls/yellowCircle.png';
+  }
+  // FC3D, PL3 etc - use red ball for all
+  if (color === 'red') return './balls/redCircle.png';
+  return './balls/blueCircle.png';
+};
+
 const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryId?: LotteryId }> = ({ num, color, max, lotteryId }) => {
+  const ballImg = getBallImage(color, lotteryId);
   return (
     <div className="relative flex flex-col items-center">
       <motion.div
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-        className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-white font-bold text-base sm:text-lg flex-shrink-0 z-10 overflow-hidden`}
+        className="relative w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg flex-shrink-0 z-10"
         style={{
-          background: getGradient(color, lotteryId),
-          boxShadow: 'inset -2px -4px 6px rgba(0,0,0,0.3), inset 2px 2px 4px rgba(255,255,255,0.3)'
+          backgroundImage: ballImg ? `url(${ballImg})` : undefined,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          background: ballImg ? undefined : getGradient(color, lotteryId),
         }}
       >
-        <div className="absolute top-[8%] left-[15%] w-[50%] h-[30%] bg-gradient-to-b from-white/70 to-transparent rounded-full pointer-events-none transform -rotate-12 blur-[0.5px]"></div>
-        <span className="relative z-10 text-shadow-sm">{formatNum(num, max)}</span>
+        <span className="relative z-10" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.4)', fontSize: '24px', lineHeight: '48px' }}>{formatNum(num, max)}</span>
       </motion.div>
-      <div className="w-7 h-1.5 bg-black/20 dark:bg-black/40 rounded-[100%] blur-[2px] -mt-1 z-0 absolute bottom-[-4px]"></div>
     </div>
   );
 };
@@ -308,16 +322,22 @@ const ResultCard: React.FC<{ lottery: LotteryConfig, result: any }> = ({ lottery
            {result.pool && <span className="text-gray-600 dark:text-gray-300 whitespace-nowrap">奖池累计金额：<span className="text-[#c0392b] font-bold">￥{result.pool}元</span></span>}
          </div>
          <div className="flex flex-wrap gap-1.5 sm:gap-2">
-            {result.reds.map((n: number, i: number) => (
-              <div key={`r-${i}`} style={{ background: getGradient('red', lottery.id), boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.2)' }} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs text-shadow-sm">
-                {formatNum(n, lottery.red.max)}
-              </div>
-            ))}
-            {result.blues.map((n: number, i: number) => (
-              <div key={`b-${i}`} style={{ background: getGradient('blue', lottery.id), boxShadow: 'inset -2px -2px 4px rgba(0,0,0,0.2)' }} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs text-shadow-sm">
-                {formatNum(n, lottery.blue.max)}
-              </div>
-            ))}
+            {result.reds.map((n: number, i: number) => {
+              const img = getBallImage('red', lottery.id);
+              return (
+                <div key={`r-${i}`} className="w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-xs" style={{ backgroundImage: img ? `url(${img})` : undefined, backgroundSize: 'cover', background: img ? undefined : getGradient('red', lottery.id) }}>
+                  <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.red.max)}</span>
+                </div>
+              );
+            })}
+            {result.blues.map((n: number, i: number) => {
+              const img = getBallImage('blue', lottery.id);
+              return (
+                <div key={`b-${i}`} className="w-7 h-7 rounded-full text-white flex items-center justify-center font-bold text-xs" style={{ backgroundImage: img ? `url(${img})` : undefined, backgroundSize: 'cover', background: img ? undefined : getGradient('blue', lottery.id) }}>
+                  <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.blue.max)}</span>
+                </div>
+              );
+            })}
          </div>
       </div>
 

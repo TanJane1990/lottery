@@ -126,8 +126,8 @@ const BROWSER_HEADERS: Record<string, string> = {
 
 const fetchFootballMatches = async (): Promise<SportsMatch[]> => {
   const urls = [
+    'https://webapi.sporttery.cn/gateway/uniform/football/getMatchCalculatorV1.qry?channel=c&poolCode=hhad,had',
     'https://webapi.sporttery.cn/gateway/jc/football/getMatchCalculatorV1.qry?poolCode=had,hhad&channel=c_web&is498=N',
-    'https://webapi.sporttery.cn/gateway/jc/football/getMatchCalculatorV1.qry?poolCode=hhad,had,crs,ttg,hafu&channel=c_web',
   ];
   
   for (const url of urls) {
@@ -137,50 +137,58 @@ const fetchFootballMatches = async (): Promise<SportsMatch[]> => {
       const list = data?.value?.matchInfoList;
       if (!list || !Array.isArray(list) || list.length === 0) continue;
       
-      const results = list.slice(0, 50).map((match: any) => {
-        // API structure: match.had / match.hhad are direct objects (NOT in subMatchList)
-        const had = match.had || {};
-        const hhad = match.hhad || {};
-        const leagueName = match.leagueAbbName || match.leagueNameAbbr || match.leagueAllName || '';
-        const homeTeam = match.homeTeamAbbName || match.homeTeamAllName || '';
-        const awayTeam = match.awayTeamAbbName || match.awayTeamAllName || '';
-        if (!homeTeam || !awayTeam) return null;
+      const results: SportsMatch[] = [];
+      for (const group of list) {
+        // Data can be flat (match fields on group) or nested (subMatchList)
+        const subs = group.subMatchList && Array.isArray(group.subMatchList) && group.subMatchList.length > 0
+          ? group.subMatchList
+          : [group];
         
-        // sellStatus can be number (2=Selling) or string
-        const sellStatus = match.matchStatus === 'Selling' || match.sellStatus === 2 || match.sellStatus === 'OnSale';
-        const isClosed = match.matchStatus === 'Closed' || match.sellStatus === 'SoldOut';
-        
-        return {
-          id: String(match.matchId || Math.random()),
-          matchNum: match.matchNumStr || `${match.matchWeek || ''}${String(match.matchNum || '').slice(-3)}`,
-          leagueName: leagueName || '未知',
-          leagueColor: getLeagueColor(leagueName),
-          homeTeam, awayTeam,
-          matchTime: match.matchTime ? match.matchTime.substring(0, 5) : '--:--',
-          matchDate: match.matchDate || match.businessDate || new Date().toISOString().split('T')[0],
-          status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
-          odds: {
-            win: had.h || '-',
-            draw: had.d || '-',
-            lose: had.a || '-',
-          },
-          handicap: hhad.goalLine || '',
-        };
-      }).filter(Boolean) as SportsMatch[];
+        for (const match of subs) {
+          const had = match.had || {};
+          const hhad = match.hhad || {};
+          const leagueName = match.leagueAbbName || match.leagueNameAbbr || match.leagueAllName || '';
+          const homeTeam = match.homeTeamAbbName || match.homeTeamAllName || '';
+          const awayTeam = match.awayTeamAbbName || match.awayTeamAllName || '';
+          if (!homeTeam || !awayTeam) continue;
+          
+          const sellStatus = match.matchStatus === 'Selling' || match.sellStatus === 2 || match.sellStatus === 'OnSale';
+          const isClosed = match.matchStatus === 'Closed' || match.sellStatus === 'SoldOut';
+          
+          // Use hhad odds if had is empty (some matches only have handicap odds)
+          const oddsSource = (had.h || had.a) ? had : hhad;
+          
+          results.push({
+            id: String(match.matchId || Math.random()),
+            matchNum: match.matchNumStr || `${match.matchWeek || ''}${String(match.matchNum || '').slice(-3)}`,
+            leagueName: leagueName || '未知',
+            leagueColor: getLeagueColor(leagueName),
+            homeTeam, awayTeam,
+            matchTime: match.matchTime ? match.matchTime.substring(0, 5) : '--:--',
+            matchDate: match.matchDate || match.businessDate || group.businessDate || new Date().toISOString().split('T')[0],
+            status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
+            odds: {
+              win: oddsSource.h || '-',
+              draw: oddsSource.d || '-',
+              lose: oddsSource.a || '-',
+            },
+            handicap: hhad.goalLine || '',
+          });
+        }
+      }
       
-      if (results.length > 0) return results;
+      if (results.length > 0) return results.slice(0, 50);
     } catch (e) {
       console.warn(`Fetch football from ${url} failed`, e);
     }
   }
-  // All API attempts failed, use mock
   return generateMockFootball();
 };
 
 const fetchBasketballMatches = async (): Promise<SportsMatch[]> => {
   const urls = [
+    'https://webapi.sporttery.cn/gateway/uniform/basketball/getMatchCalculatorV1.qry?channel=c&poolCode=mnl',
     'https://webapi.sporttery.cn/gateway/jc/basketball/getMatchCalculatorV1.qry?poolCode=mnl,hdc&channel=c_web',
-    'https://webapi.sporttery.cn/gateway/jc/basketball/getMatchCalculatorV1.qry?poolCode=hdc,mnl,hilo,wnm&channel=c_web',
   ];
   
   for (const url of urls) {
@@ -190,10 +198,12 @@ const fetchBasketballMatches = async (): Promise<SportsMatch[]> => {
       const list = data?.value?.matchInfoList;
       if (!list || !Array.isArray(list) || list.length === 0) continue;
       
-      // Basketball: data is nested in subMatchList
       const results: SportsMatch[] = [];
       for (const group of list) {
-        const subs = group.subMatchList || [];
+        const subs = group.subMatchList && Array.isArray(group.subMatchList) && group.subMatchList.length > 0
+          ? group.subMatchList
+          : [group];
+        
         for (const sub of subs) {
           const mnl = sub.mnl || {};
           const hdc = sub.hdc || {};
@@ -213,7 +223,7 @@ const fetchBasketballMatches = async (): Promise<SportsMatch[]> => {
             leagueColor: getLeagueColor(leagueName),
             homeTeam, awayTeam,
             matchTime: sub.matchTime ? sub.matchTime.substring(0, 5) : '--:--',
-            matchDate: sub.matchDate || sub.businessDate || new Date().toISOString().split('T')[0],
+            matchDate: sub.matchDate || sub.businessDate || group.businessDate || new Date().toISOString().split('T')[0],
             status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
             odds: {
               win: mnl.h || '-',
