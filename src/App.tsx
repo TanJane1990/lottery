@@ -855,55 +855,50 @@ export default function App() {
 
   // Initial Data Fetching & Caching strategy
   useEffect(() => {
-    const loadData = async () => {
-      // 1. Try to load cached data from localStorage
-      let cachedData: Record<string, any[]> = {};
-      try {
-        const stored = localStorage.getItem('lottery_history_data');
-        if (stored) cachedData = JSON.parse(stored);
-      } catch (e) {
-        console.warn('Failed to parse cached history data');
-      }
+    // 1. Instantly load from localStorage (zero network, zero lag)
+    let cachedData: Record<string, any[]> = {};
+    try {
+      const stored = localStorage.getItem('lottery_history_data');
+      if (stored) cachedData = JSON.parse(stored);
+    } catch (e) {
+      console.warn('Failed to parse cached history data');
+    }
 
-      // 2. Set initial state quickly if cache exists
-      if (Object.keys(cachedData).length > 0) {
-        setResultsData(cachedData); 
-      }
+    // 2. Set state immediately from cache — page renders instantly
+    if (Object.keys(cachedData).length > 0) {
+      setResultsData(cachedData); 
+    }
 
-      // 3. Fetch latest official data and merge with cache
+    // 3. Background network fetch — does NOT block page rendering
+    const fetchLatestInBackground = async () => {
       const latestDataMapping: Record<string, any[]> = { ...cachedData };
       let hasUpdates = false;
 
-      await Promise.all(
-        LOTTERIES.map(async (l) => {
-          try {
-            // Only fetch the latest 20 results on startup to prevent UI lag
-            const fetched = await fetchRealData(l.id, 1, 20);
-            if (fetched && fetched.length > 0) {
-              const existingList = latestDataMapping[l.id] || [];
-              const combinedMap = new Map();
-              
-              // First map existing cache
-              existingList.forEach((item: any) => combinedMap.set(item.issue, item));
-              // Then overwrite/add with latest network data (preferring recent)
-              fetched.forEach((item: any) => combinedMap.set(item.issue, item));
-              
-              // Map to array, sort by issue descending
-              const mergedList = Array.from(combinedMap.values()).sort((a, b) => {
-                 // basic string comparison handles issue numbers usually (e.g., '2023001' vs '2023002')
-                 return String(b.issue).localeCompare(String(a.issue));
-              });
+      // Fetch each lottery sequentially with small delay to avoid burst requests
+      for (const l of LOTTERIES) {
+        try {
+          const fetched = await fetchRealData(l.id, 1, 20);
+          if (fetched && fetched.length > 0) {
+            const existingList = latestDataMapping[l.id] || [];
+            const combinedMap = new Map();
+            existingList.forEach((item: any) => combinedMap.set(item.issue, item));
+            fetched.forEach((item: any) => combinedMap.set(item.issue, item));
+            
+            const mergedList = Array.from(combinedMap.values()).sort((a, b) => {
+              return String(b.issue).localeCompare(String(a.issue));
+            });
 
-              latestDataMapping[l.id] = mergedList;
-              hasUpdates = true;
-            }
-          } catch (e) {
-            console.error(`Error updating data for ${l.id}`, e);
+            latestDataMapping[l.id] = mergedList;
+            hasUpdates = true;
           }
-        })
-      );
+        } catch (e) {
+          console.error(`Error updating data for ${l.id}`, e);
+        }
+        // Small delay between each request to avoid overwhelming
+        await new Promise(r => setTimeout(r, 300));
+      }
 
-      // 4. Update state and save merged data back to storage if there were network successes
+      // 4. Silently update state and save to storage
       if (hasUpdates) {
         setResultsData(latestDataMapping);
         localStorage.setItem('lottery_history_data', JSON.stringify(latestDataMapping));
@@ -978,11 +973,13 @@ export default function App() {
         }
       };
 
-      // Fire and forget background sync
-      setTimeout(syncHistoricalData, 2000);
+      // Fire and forget background sync for deep history
+      setTimeout(syncHistoricalData, 5000);
 
     };
-    loadData();
+
+    // Fire-and-forget: network fetch runs in background, does NOT block page render
+    fetchLatestInBackground();
   }, []);
 
   useEffect(() => {
