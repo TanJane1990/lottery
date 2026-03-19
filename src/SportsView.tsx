@@ -19,6 +19,10 @@ interface SportsMatch {
   leagueColor: string;
   homeTeam: string;
   awayTeam: string;
+  homeTeamId?: number;
+  awayTeamId?: number;
+  homeTeamCode?: string;
+  awayTeamCode?: string;
   matchTime: string;
   matchDate: string;
   status: 'upcoming' | 'selling' | 'closed';
@@ -164,6 +168,8 @@ const fetchFootballMatches = async (): Promise<SportsMatch[]> => {
             leagueName: leagueName || '未知',
             leagueColor: getLeagueColor(leagueName),
             homeTeam, awayTeam,
+            homeTeamId: match.homeTeamId,
+            awayTeamId: match.awayTeamId,
             matchTime: match.matchTime ? match.matchTime.substring(0, 5) : '--:--',
             matchDate: match.matchDate || match.businessDate || group.businessDate || new Date().toISOString().split('T')[0],
             status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
@@ -222,6 +228,8 @@ const fetchBasketballMatches = async (): Promise<SportsMatch[]> => {
             leagueName: leagueName || '未知',
             leagueColor: getLeagueColor(leagueName),
             homeTeam, awayTeam,
+            homeTeamId: sub.homeTeamId,
+            awayTeamId: sub.awayTeamId,
             matchTime: sub.matchTime ? sub.matchTime.substring(0, 5) : '--:--',
             matchDate: sub.matchDate || sub.businessDate || group.businessDate || new Date().toISOString().split('T')[0],
             status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
@@ -299,6 +307,32 @@ const generateMockBasketball = (): SportsMatch[] => {
   }));
 };
 
+// --- Team Logo Component ---
+const TeamLogo: React.FC<{ teamName: string; teamId?: number; leagueColor: string }> = ({ teamName, teamId, leagueColor }) => {
+  const [imgError, setImgError] = React.useState(false);
+  const logoUrl = teamId ? `https://i.sporttery.cn/img/teamlogo/football/sml/${teamId}.png` : null;
+
+  if (logoUrl && !imgError) {
+    return (
+      <div className="w-9 h-9 rounded-lg border border-gray-100 dark:border-slate-700 flex items-center justify-center overflow-hidden bg-white dark:bg-slate-800">
+        <img
+          src={logoUrl}
+          alt={teamName}
+          className="w-7 h-7 object-contain"
+          onError={() => setImgError(true)}
+          loading="lazy"
+        />
+      </div>
+    );
+  }
+  // Fallback: team initial with team color
+  return (
+    <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: leagueColor + 'CC' }}>
+      {teamName.charAt(0)}
+    </div>
+  );
+};
+
 // --- Match Card Component ---
 const MatchCard: React.FC<{
   match: SportsMatch;
@@ -336,13 +370,20 @@ const MatchCard: React.FC<{
       {/* Teams */}
       <div className="px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex-1 text-left">
-            <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">{match.homeTeam}</span>
-            <span className="text-[10px] text-gray-400 ml-1">[主]</span>
+          <div className="flex-1 flex items-center gap-2">
+            <TeamLogo teamName={match.homeTeam} teamId={match.homeTeamId} leagueColor={match.leagueColor} />
+            <div className="flex flex-col">
+              <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">{match.homeTeam}</span>
+              <span className="text-[10px] text-gray-400">[主]</span>
+            </div>
           </div>
-          <span className="text-lg font-black text-gray-300 dark:text-gray-600 px-3">VS</span>
-          <div className="flex-1 text-right">
-            <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">{match.awayTeam}</span>
+          <span className="text-lg font-black text-gray-300 dark:text-gray-600 px-2">VS</span>
+          <div className="flex-1 flex items-center justify-end gap-2">
+            <div className="flex flex-col items-end">
+              <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">{match.awayTeam}</span>
+              <span className="text-[10px] text-gray-400">[客]</span>
+            </div>
+            <TeamLogo teamName={match.awayTeam} teamId={match.awayTeamId} leagueColor={match.leagueColor} />
           </div>
         </div>
         {match.handicap && (

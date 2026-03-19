@@ -307,8 +307,9 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryI
         className="relative w-10 h-10 rounded-full flex items-center justify-center text-white font-bold flex-shrink-0 z-10"
         style={{
           backgroundImage: `url(${ballImg})`,
-          backgroundSize: 'cover',
+          backgroundSize: 'contain',
           backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
         }}
       >
         <span className="relative z-10" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)', fontSize: '16px', lineHeight: '40px' }}>{formatNum(num, max)}</span>
@@ -332,12 +333,12 @@ const ResultCard: React.FC<{ lottery: LotteryConfig, result: any }> = ({ lottery
          </div>
          <div className="flex flex-wrap gap-1.5 sm:gap-2">
             {result.reds.map((n: number, i: number) => (
-              <div key={`r-${i}`} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: 'cover' }}>
+              <div key={`r-${i}`} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
                 <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.red.max)}</span>
               </div>
             ))}
             {result.blues.map((n: number, i: number) => (
-              <div key={`b-${i}`} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: 'cover' }}>
+              <div key={`b-${i}`} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
                 <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.blue.max)}</span>
               </div>
             ))}
