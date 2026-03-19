@@ -274,9 +274,10 @@ export const fetchRealData = async (id: LotteryId) => {
 
 // --- Components ---
 // Ball image paths based on official lottery colors
-// 双色球(SSQ): 红球+蓝球, 大乐透(DLT): 蓝球+黄球
-// 福彩3D(FC3D): 红球, 排列3(PL3): 红球
-// 七乐彩(QLC): 红球+蓝球, 七星彩(QXC): 蓝球+蓝球
+// 红redCircle 蓝blueCircle 黄yellowCircle 紫purpleCircle 粉pinkCircle
+// 双色球(SSQ): 红+蓝, 大乐透(DLT): 蓝+黄
+// 福彩3D(FC3D): 紫, 排列3(PL3): 粉
+// 七乐彩(QLC): 红+蓝, 七星彩(QXC): 蓝+蓝
 const getBallImage = (color: 'red' | 'blue', lotteryId?: LotteryId | null): string => {
   switch (lotteryId) {
     case 'SSQ': // 双色球：红球 + 蓝球
@@ -287,10 +288,10 @@ const getBallImage = (color: 'red' | 'blue', lotteryId?: LotteryId | null): stri
       return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
     case 'QXC': // 七星彩：蓝球 + 蓝球
       return './balls/blueCircle.png';
-    case 'FC3D': // 福彩3D：红球
-      return './balls/redCircle.png';
-    case 'PL3': // 排列3：红球
-      return './balls/redCircle.png';
+    case 'FC3D': // 福彩3D：紫球
+      return './balls/purpleCircle.png';
+    case 'PL3': // 排列3：粉球
+      return './balls/pinkCircle.png';
     default:
       return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
   }
