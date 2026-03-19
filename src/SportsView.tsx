@@ -160,9 +160,9 @@ const fetchFootballMatches = async (): Promise<SportsMatch[]> => {
           matchDate: match.matchDate || match.businessDate || new Date().toISOString().split('T')[0],
           status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
           odds: {
-            win: had.a || '-',
+            win: had.h || '-',
             draw: had.d || '-',
-            lose: had.h || '-',
+            lose: had.a || '-',
           },
           handicap: hhad.goalLine || '',
         };
@@ -216,8 +216,8 @@ const fetchBasketballMatches = async (): Promise<SportsMatch[]> => {
             matchDate: sub.matchDate || sub.businessDate || new Date().toISOString().split('T')[0],
             status: sellStatus ? 'selling' as const : isClosed ? 'closed' as const : 'upcoming' as const,
             odds: {
-              win: mnl.a || '-',
-              lose: mnl.h || '-',
+              win: mnl.h || '-',
+              lose: mnl.a || '-',
             },
             handicap: hdc.goalLine || '',
             totalPoints: hilo.goalLine || '',
@@ -615,7 +615,7 @@ export const SportsView = () => {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950">
       {/* Header */}
-      <div className="bg-gradient-to-br from-emerald-600 to-teal-800 pt-[calc(env(safe-area-inset-top,44px)+20px)] pb-4 px-4 shadow-lg">
+      <div className="bg-gradient-to-br from-emerald-600 to-teal-800 pt-[calc(env(safe-area-inset-top,48px)+28px)] pb-4 px-4 shadow-lg">
         <h1 className="text-xl font-bold text-center text-white mb-3">竞彩中心</h1>
         
         <div className="flex bg-white/15 rounded-xl p-1 gap-1">
