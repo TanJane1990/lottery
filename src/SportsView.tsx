@@ -308,27 +308,14 @@ const generateMockBasketball = (): SportsMatch[] => {
 };
 
 // --- Team Logo Component ---
-const TeamLogo: React.FC<{ teamName: string; teamId?: number; leagueColor: string }> = ({ teamName, teamId, leagueColor }) => {
-  const [imgError, setImgError] = React.useState(false);
-  const logoUrl = teamId ? `https://i.sporttery.cn/img/teamlogo/football/sml/${teamId}.png` : null;
+const TeamLogo: React.FC<{ isFootball: boolean; isHome: boolean }> = ({ isFootball, isHome }) => {
+  const src = isFootball
+    ? (isHome ? './teams/zq_zd.png' : './teams/zq_kd.png')
+    : (isHome ? './teams/lq_zd.png' : './teams/lq_kd.png');
 
-  if (logoUrl && !imgError) {
-    return (
-      <div className="w-9 h-9 rounded-lg border border-gray-100 dark:border-slate-700 flex items-center justify-center overflow-hidden bg-white dark:bg-slate-800">
-        <img
-          src={logoUrl}
-          alt={teamName}
-          className="w-7 h-7 object-contain"
-          onError={() => setImgError(true)}
-          loading="lazy"
-        />
-      </div>
-    );
-  }
-  // Fallback: team initial with team color
   return (
-    <div className="w-9 h-9 rounded-lg flex items-center justify-center text-white font-bold text-sm" style={{ backgroundColor: leagueColor + 'CC' }}>
-      {teamName.charAt(0)}
+    <div className="w-10 h-10 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+      <img src={src} alt={isHome ? '主队' : '客队'} className="w-10 h-10 object-contain" />
     </div>
   );
 };
@@ -370,29 +357,23 @@ const MatchCard: React.FC<{
       {/* Teams */}
       <div className="px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex-1 flex items-center gap-2">
-            <TeamLogo teamName={match.homeTeam} teamId={match.homeTeamId} leagueColor={match.leagueColor} />
-            <div className="flex flex-col">
-              <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">{match.homeTeam}</span>
-              <span className="text-[10px] text-gray-400">[主]</span>
-            </div>
+          <div className="flex-1 flex flex-col items-center gap-1">
+            <TeamLogo isFootball={isFootball} isHome={true} />
+            <span className="font-bold text-gray-800 dark:text-gray-100 text-xs text-center leading-tight">{match.homeTeam}</span>
           </div>
-          <span className="text-lg font-black text-gray-300 dark:text-gray-600 px-2">VS</span>
-          <div className="flex-1 flex items-center justify-end gap-2">
-            <div className="flex flex-col items-end">
-              <span className="font-bold text-gray-800 dark:text-gray-100 text-sm">{match.awayTeam}</span>
-              <span className="text-[10px] text-gray-400">[客]</span>
-            </div>
-            <TeamLogo teamName={match.awayTeam} teamId={match.awayTeamId} leagueColor={match.leagueColor} />
+          <div className="flex flex-col items-center px-3">
+            <span className="text-lg font-black text-gray-300 dark:text-gray-600">VS</span>
+            {match.handicap && (
+              <span className="text-[10px] bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-medium mt-1">
+                让球 {match.handicap}
+              </span>
+            )}
+          </div>
+          <div className="flex-1 flex flex-col items-center gap-1">
+            <TeamLogo isFootball={isFootball} isHome={false} />
+            <span className="font-bold text-gray-800 dark:text-gray-100 text-xs text-center leading-tight">{match.awayTeam}</span>
           </div>
         </div>
-        {match.handicap && (
-          <div className="text-center mt-1">
-            <span className="text-[10px] bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-2 py-0.5 rounded-full font-medium">
-              让球 {match.handicap}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* Odds Buttons (interactive) */}

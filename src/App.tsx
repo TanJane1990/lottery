@@ -683,8 +683,16 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
 
 const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) => {
   const [selectedLottery, setSelectedLottery] = useState<LotteryId>('SSQ');
+  const [visibleCount, setVisibleCount] = useState(20);
   const config = LOTTERIES.find(l => l.id === selectedLottery)!;
   const results = resultsData[selectedLottery] || [];
+  const visibleResults = results.slice(0, visibleCount);
+  const hasMore = visibleCount < results.length;
+
+  const handleChangeLottery = (id: LotteryId) => {
+    setSelectedLottery(id);
+    setVisibleCount(20); // Reset pagination when switching lottery
+  };
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
@@ -694,7 +702,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
           {LOTTERIES.map(l => (
             <button
               key={l.id}
-              onClick={() => setSelectedLottery(l.id)}
+              onClick={() => handleChangeLottery(l.id)}
               className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
                 ${l.id === selectedLottery ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300'}`}
             >
@@ -708,9 +716,19 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
            <div className="p-8 m-4 text-center text-gray-400 dark:text-gray-500 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse">正在加载历史数据...</div>
         ) : (
           <div className="flex flex-col border-y sm:border-0 border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800 sm:divide-y-0">
-            {results.map((res, idx) => (
-              <ResultCard key={idx} lottery={config} result={res} />
+            {visibleResults.map((res, idx) => (
+              <ResultCard key={res.issue || idx} lottery={config} result={res} />
             ))}
+            {hasMore && (
+              <div className="p-4 text-center">
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 30)}
+                  className="px-6 py-2.5 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 rounded-full text-sm font-medium shadow-sm border border-gray-200 dark:border-slate-700 active:scale-95 transition-all"
+                >
+                  加载更多（已显示 {visibleCount}/{results.length} 期）
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
