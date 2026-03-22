@@ -760,7 +760,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,55px)+45px)] pb-8 px-6 shadow-lg">
+      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,55px)+45px)] pb-6 px-6 shadow-lg">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 bg-white dark:bg-slate-900 /10 rounded-full flex items-center justify-center border-2 border-white/20">
             <User size={32} className="text-white" />
@@ -774,18 +774,17 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
 
       <div className="flex-1 overflow-y-auto p-4 -mt-4 relative z-10 space-y-4">
         {/* Donation Section */}
-        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-slate-800 flex items-center justify-center gap-5">
-          <div className="flex flex-col text-left">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Sparkles size={16} className="text-yellow-500" />
-              <h2 className="text-[13px] font-bold text-gray-800 dark:text-gray-100">“锦鲤”充电站</h2>
-            </div>
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-relaxed max-w-[130px]">
-              给开发者充个电，<br/>祝早日脱非入欧，中头奖哦！
-            </p>
+        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col items-center text-center">
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles size={20} className="text-yellow-500" />
+            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">“锦鲤”充电站</h2>
+            <Sparkles size={20} className="text-yellow-500" />
           </div>
-          <div className="w-[72px] h-[72px] shrink-0 bg-gray-50 rounded-lg overflow-hidden p-1 border border-gray-100 dark:border-slate-700">
-            <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-sm shadow-[inset_0_0_2px_rgba(0,0,0,0.1)]" />
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 px-2">
+            给开发者充个电，祝你早日脱非入欧，喜中头奖！到时候别忘了回来还愿哦。
+          </p>
+          <div className="w-40 h-40 bg-gray-50 rounded-xl overflow-hidden p-2 border border-gray-100 dark:border-slate-700">
+            <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-lg shadow-inner" />
           </div>
         </div>
 
