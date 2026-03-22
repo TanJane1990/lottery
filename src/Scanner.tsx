@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Camera, X, Loader2, ScanLine, AlertCircle } from 'lucide-react';
+import { Camera, Image as ImageIcon, X, Loader2, ScanLine, AlertCircle } from 'lucide-react';
 import Tesseract from 'tesseract.js';
+import { Camera as CapCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 
 interface ScannerProps {
   onClose: () => void;
@@ -14,12 +15,19 @@ export const ScannerView: React.FC<ScannerProps> = ({ onClose, onScanned }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => setImage(event.target?.result as string);
-      reader.readAsDataURL(file);
+  const takePhoto = async (source: CameraSource) => {
+    try {
+      const photo = await CapCamera.getPhoto({
+        quality: 90,
+        allowEditing: false,
+        resultType: CameraResultType.DataUrl,
+        source: source
+      });
+      if (photo.dataUrl) {
+        setImage(photo.dataUrl);
+      }
+    } catch (e) {
+      console.log('User cancelled or camera failed', e);
     }
   };
 
@@ -122,25 +130,27 @@ export const ScannerView: React.FC<ScannerProps> = ({ onClose, onScanned }) => {
       {!image ? (
         <div className="w-full max-w-sm flex flex-col gap-4">
           <button 
-            onClick={() => fileInputRef.current?.click()}
-            className="bg-blue-600 text-white rounded-2xl p-4 font-bold flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-95 transition-all w-full"
+            onClick={() => takePhoto(CameraSource.Camera)}
+            className="bg-blue-600 text-white rounded-2xl p-4 font-bold flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-95 transition-all w-full shadow-lg shadow-blue-500/20"
           >
             <Camera size={24} />
-            拍照识别 / 从相册选择
+            立即拍照识别
           </button>
+          
+          <button 
+            onClick={() => takePhoto(CameraSource.Photos)}
+            className="bg-slate-800 text-white rounded-2xl p-4 font-bold flex items-center justify-center gap-2 hover:bg-slate-700 active:scale-95 transition-all w-full border border-slate-700"
+          >
+            <ImageIcon size={24} />
+            从相册选择截图
+          </button>
+
           {errorMsg && (
-            <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3 flex gap-2 text-sm text-red-100">
+            <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3 flex gap-2 text-sm text-red-100 mt-2">
                <AlertCircle size={18} className="text-red-400 shrink-0" />
                <p>{errorMsg}</p>
             </div>
           )}
-          <input 
-            type="file" 
-            accept="image/*" 
-            ref={fileInputRef} 
-            onChange={handleImageUpload} 
-            className="hidden" 
-          />
         </div>
       ) : (
         <div className="w-full max-w-sm flex flex-col items-center">
