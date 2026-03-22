@@ -4,7 +4,7 @@ import Tesseract from 'tesseract.js';
 
 interface ScannerProps {
   onClose: () => void;
-  onScanned: (result: { reds: number[], blues: number[], lotteryId: string }[]) => void;
+  onScanned: (result: { reds: number[], blues: number[], lotteryId: string }[], purchaseDate?: string) => void;
 }
 
 export const ScannerView: React.FC<ScannerProps> = ({ onClose, onScanned }) => {
@@ -30,7 +30,7 @@ export const ScannerView: React.FC<ScannerProps> = ({ onClose, onScanned }) => {
     setErrorMsg('');
 
     try {
-      const worker = await Tesseract.createWorker({
+      const worker = await Tesseract.createWorker('eng', 1, {
         logger: m => {
           if (m.status === 'recognizing text') {
             setProgress(parseInt((m.progress * 100).toString(), 10));
@@ -38,12 +38,9 @@ export const ScannerView: React.FC<ScannerProps> = ({ onClose, onScanned }) => {
         }
       });
       
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
-      
-      // We only care about digits, spaces, dashes
+      // Add / and : for date parsing
       await worker.setParameters({
-        tessedit_char_whitelist: '0123456789 -[]()|',
+        tessedit_char_whitelist: '0123456789 -[]()|/:',
       });
 
       const { data: { text } } = await worker.recognize(image);
@@ -52,11 +49,17 @@ export const ScannerView: React.FC<ScannerProps> = ({ onClose, onScanned }) => {
       // Simple regex parse for SSQ/DLT formats like "05 09 11 17 23 28 - 06"
       const lines = text.split('\n');
       const foundSets: { reds: number[], blues: number[], lotteryId: string }[] = [];
+      let purchaseDate: string | undefined = undefined;
 
-      const regexSSQ = /((?:\d{2}[\s\-]+){5}\d{2})[\s\-]+(\d{2})/g;
-      const regexDLT = /((?:\d{2}[\s\-]+){4}\d{2})[\s\-]+(\d{2})[\s\-]+(\d{2})/g;
+      const dateRegex = /\b(20\d{2})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12]\d|3[01])[\s\-]*([0-1]\d|2[0-3])[:\s]([0-5]\d)[:\s]([0-5]\d)\b/;
 
       lines.forEach(line => {
+        // Look for date before scrubbing
+        const dateMatch = line.match(dateRegex);
+        if (dateMatch) {
+          purchaseDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T${dateMatch[4]}:${dateMatch[5]}:${dateMatch[6]}.000X`.replace('X', '+08:00'); // Standard ISO with China timezone
+        }
+
         const cleanLine = line.replace(/[^\d\s\-]/g, ' ').trim().replace(/\s+/g, ' ');
 
         // Try SSQ first
@@ -84,7 +87,7 @@ export const ScannerView: React.FC<ScannerProps> = ({ onClose, onScanned }) => {
       setIsScanning(false);
       
       if (foundSets.length > 0) {
-        onScanned(foundSets);
+        onScanned(foundSets, purchaseDate);
         onClose();
       } else {
         setErrorMsg('未能在图片中识别到清晰的红蓝球号码，请尝试将目标区域放大并重新截取。');

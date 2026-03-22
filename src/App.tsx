@@ -737,7 +737,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
   );
 };
 
-const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[]) => void, resultsData: Record<string, any[]> }) => {
+const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
   const [showScanner, setShowScanner] = useState(false);
 
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
@@ -802,10 +802,10 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
         {showScanner && (
           <ScannerView 
              onClose={() => setShowScanner(false)} 
-             onScanned={(sets) => {
+             onScanned={(sets, overrideDate) => {
                // Only supports one type of lottery per scan currently. Using the first parsed record's lottery type for all if mixing, but users scan a single ticket type.
                if (sets.length > 0) {
-                 onSaveTicket(sets[0].lotteryId as LotteryId, sets);
+                 onSaveTicket(sets[0].lotteryId as LotteryId, sets, overrideDate);
                }
              }}
           />
@@ -1095,11 +1095,11 @@ export default function App() {
     setTimeout(() => setToast({ visible: false, message: '' }), 2000);
   };
 
-  const handleSaveTicket = (lotteryId: LotteryId, numbers: {reds: number[], blues: number[]}[]) => {
+  const handleSaveTicket = (lotteryId: LotteryId, numbers: {reds: number[], blues: number[]}[], dateOverride?: string) => {
     const newTicket: SavedTicket = {
       id: Math.random().toString(36).substring(7),
       lotteryId,
-      date: new Date().toISOString(),
+      date: dateOverride ? dateOverride : new Date().toISOString(),
       numbers
     };
     setSavedTickets(prev => [newTicket, ...prev]);
