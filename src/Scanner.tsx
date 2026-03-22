@@ -51,13 +51,16 @@ export const ScannerView: React.FC<ScannerProps> = ({ onClose, onScanned }) => {
       const foundSets: { reds: number[], blues: number[], lotteryId: string }[] = [];
       let purchaseDate: string | undefined = undefined;
 
-      const dateRegex = /\b(20\d{2})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12]\d|3[01])[\s\-]*([0-1]\d|2[0-3])[:\s]([0-5]\d)[:\s]([0-5]\d)\b/;
+      const dateRegex = /\b(20\d{2})[\/\-](0[1-9]|1[0-2])[\/\-](0[1-9]|[12]\d|3[01])(?:[\s\-]*([0-1]\d|2[0-3])[:\s]([0-5]\d)[:\s]([0-5]\d))?\b/;
 
       lines.forEach(line => {
         // Look for date before scrubbing
         const dateMatch = line.match(dateRegex);
-        if (dateMatch) {
-          purchaseDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T${dateMatch[4]}:${dateMatch[5]}:${dateMatch[6]}.000X`.replace('X', '+08:00'); // Standard ISO with China timezone
+        if (dateMatch && !purchaseDate) {
+          const hr = dateMatch[4] || '00';
+          const mn = dateMatch[5] || '00';
+          const sc = dateMatch[6] || '00';
+          purchaseDate = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T${hr}:${mn}:${sc}.000+08:00`; // Standard ISO with China timezone
         }
 
         const cleanLine = line.replace(/[^\d\s\-]/g, ' ').trim().replace(/\s+/g, ' ');
