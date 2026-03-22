@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble } from 'lucide-react';
+import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble, ScanLine } from 'lucide-react';
 import { CapacitorHttp } from '@capacitor/core';
 import { SplashScreen } from './SplashScreen';
 import { SportsView } from './SportsView';
+import { ScannerView } from './Scanner';
 
 // --- Types ---
 type Org = '福彩' | '体彩';
@@ -736,7 +737,9 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
   );
 };
 
-const MineView = ({ savedTickets, onDeleteTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, resultsData: Record<string, any[]> }) => {
+const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[]) => void, resultsData: Record<string, any[]> }) => {
+  const [showScanner, setShowScanner] = useState(false);
+
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
     const purchaseTime = new Date(ticket.date).getTime();
@@ -787,6 +790,26 @@ const MineView = ({ savedTickets, onDeleteTicket, resultsData }: { savedTickets:
             <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-lg shadow-inner" />
           </div>
         </div>
+
+        <button 
+          onClick={() => setShowScanner(true)}
+          className="w-full bg-blue-600 text-white rounded-2xl p-4 font-bold flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
+        >
+          <ScanLine size={24} />
+          拍照扫票自动对奖
+        </button>
+
+        {showScanner && (
+          <ScannerView 
+             onClose={() => setShowScanner(false)} 
+             onScanned={(sets) => {
+               // Only supports one type of lottery per scan currently. Using the first parsed record's lottery type for all if mixing, but users scan a single ticket type.
+               if (sets.length > 0) {
+                 onSaveTicket(sets[0].lotteryId as LotteryId, sets);
+               }
+             }}
+          />
+        )}
 
         {savedTickets.length === 0 ? (
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-slate-800">
@@ -1129,7 +1152,7 @@ export default function App() {
                     {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} resultsData={resultsData} />}
                     {activeTab === 'sports' && <SportsView />}
                     {activeTab === 'results' && <ResultsView resultsData={resultsData} />}
-                    {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} resultsData={resultsData} />}
+                    {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} onSaveTicket={handleSaveTicket} resultsData={resultsData} />}
                   </motion.div>
                 </AnimatePresence>
               </div>
