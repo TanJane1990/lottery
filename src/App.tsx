@@ -4,7 +4,6 @@ import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, Histo
 import { CapacitorHttp } from '@capacitor/core';
 import { SplashScreen } from './SplashScreen';
 import { SportsView } from './SportsView';
-import { ScannerView } from './Scanner';
 
 // --- Types ---
 type Org = '福彩' | '体彩';
@@ -738,8 +737,6 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 };
 
 const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
-  const [showScanner, setShowScanner] = useState(false);
-
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
     const purchaseTime = new Date(ticket.date).getTime();
@@ -777,39 +774,20 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
 
       <div className="flex-1 overflow-y-auto p-4 -mt-6 relative z-10 space-y-4">
         {/* Donation Section */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col items-center text-center">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={20} className="text-yellow-500" />
-            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">“锦鲤”充电站</h2>
-            <Sparkles size={20} className="text-yellow-500" />
+        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 shadow-sm border border-gray-100 dark:border-slate-800 flex items-center justify-between">
+          <div className="flex flex-col text-left mr-4">
+            <div className="flex items-center gap-1.5 mb-1">
+              <Sparkles size={16} className="text-yellow-500" />
+              <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100">“锦鲤”充电站</h2>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+              给开发者充个电，<br />祝早日脱非入欧，<br />喜中头奖哦！
+            </p>
           </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 px-2">
-            给开发者充个电，祝你早日脱非入欧，喜中头奖！到时候别忘了回来还愿哦。
-          </p>
-          <div className="w-48 h-48 sm:w-56 sm:h-56 bg-gray-50 rounded-xl overflow-hidden p-2 border border-gray-100 dark:border-slate-700">
-            <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-lg shadow-inner" />
+          <div className="w-24 h-24 shrink-0 bg-gray-50 rounded-lg overflow-hidden p-1.5 border border-gray-100 dark:border-slate-700">
+            <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-sm shadow-inner" />
           </div>
         </div>
-
-        <button 
-          onClick={() => setShowScanner(true)}
-          className="w-full bg-blue-600 text-white rounded-2xl p-4 font-bold flex items-center justify-center gap-2 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-600/20"
-        >
-          <ScanLine size={24} />
-          拍照扫票自动对奖
-        </button>
-
-        {showScanner && (
-          <ScannerView 
-             onClose={() => setShowScanner(false)} 
-             onScanned={(sets, overrideDate) => {
-               // Only supports one type of lottery per scan currently. Using the first parsed record's lottery type for all if mixing, but users scan a single ticket type.
-               if (sets.length > 0) {
-                 onSaveTicket(sets[0].lotteryId as LotteryId, sets, overrideDate);
-               }
-             }}
-          />
-        )}
 
         {savedTickets.length === 0 ? (
           <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-slate-800">
