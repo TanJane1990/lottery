@@ -736,7 +736,28 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
   );
 };
 
-const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void }) => {
+const MineView = ({ savedTickets, onDeleteTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, resultsData: Record<string, any[]> }) => {
+  const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
+    if (!results || results.length === 0) return null;
+    const purchaseTime = new Date(ticket.date).getTime();
+    
+    let validResult = null;
+    // Results are sorted newest first. Loop from oldest to newest to find FIRST draw after purchase
+    for (let i = results.length - 1; i >= 0; i--) {
+      const res = results[i];
+      const drawDateString = res.date.includes(' ') ? res.date.split(' ')[0] : res.date;
+      // Assuming draws happen at 21:00 or 21:30. Set to 21:30 local time.
+      const drawTime = new Date(`${drawDateString}T21:30:00+08:00`).getTime();
+      
+      // We check the FIRST draw that happened strictly AFTER the exact time of purchase
+      if (drawTime > purchaseTime) {
+        validResult = res;
+        break; 
+      }
+    }
+    return validResult;
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,55px)+45px)] pb-12 px-6 shadow-lg">
@@ -777,31 +798,73 @@ const MineView = ({ savedTickets, onDeleteTicket }: { savedTickets: SavedTicket[
           <div className="space-y-4">
             {savedTickets.map(ticket => {
               const config = LOTTERIES.find(l => l.id === ticket.lotteryId)!;
+              const matchingResult = getMatchingResult(ticket, resultsData[ticket.lotteryId] || []);
+              
+              // Helper to check if a specific number was drawn
+              const isHit = (n: number, type: 'red' | 'blue') => {
+                if (!matchingResult) return false;
+                if (type === 'red' && matchingResult.reds.includes(n)) return true;
+                if (type === 'blue' && matchingResult.blues.includes(n)) return true;
+                return false;
+              };
+
               return (
-                <div key={ticket.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-800">
-                  <div className="flex justify-between items-center mb-3 border-b border-gray-50 dark:border-slate-800 pb-3">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${THEME_CLASSES[config.theme].bg}`}></span>
-                      <span className="font-bold text-gray-800 dark:text-gray-100 ">{config.name}</span>
-                      <span className="text-xs text-gray-400 dark:text-gray-500">{new Date(ticket.date).toLocaleDateString()}</span>
+                <div key={ticket.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative overflow-hidden">
+                  <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-50 dark:border-slate-800">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`w-2 h-2 rounded-full ${THEME_CLASSES[config.theme].bg}`}></span>
+                        <span className="font-bold text-gray-800 dark:text-gray-100 ">{config.name}</span>
+                        {!matchingResult ? (
+                          <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">等待开奖</span>
+                        ) : (
+                          <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-medium">已对奖 (第{matchingResult.issue}期)</span>
+                        )}
+                      </div>
+                      <div className="text-[10px] text-gray-400 dark:text-gray-500 flex flex-col sm:flex-row sm:gap-4">
+                        <span>购买时间: {new Date(ticket.date).toLocaleString()}</span>
+                        {matchingResult && <span>开奖日期: {matchingResult.date.split(' ')[0]}</span>}
+                      </div>
                     </div>
-                    <button onClick={() => onDeleteTicket(ticket.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors p-1">
+                    <button onClick={() => onDeleteTicket(ticket.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors p-2 -mr-2">
                       <Trash2 size={16} />
                     </button>
                   </div>
+                  
                   <div className="space-y-3">
                     {ticket.numbers.map((set, idx) => (
-                      <div key={idx} className="flex flex-wrap gap-1.5">
-                        {set.reds.map((n, i) => (
-                          <div key={`r-${idx}-${i}`} className="w-7 h-7 rounded-full bg-red-50 text-red-600 flex items-center justify-center text-xs font-bold border border-red-100">
-                            {formatNum(n, config.red.max)}
-                          </div>
-                        ))}
-                        {set.blues.map((n, i) => (
-                          <div key={`b-${idx}-${i}`} className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold border border-blue-100">
-                            {formatNum(n, config.blue.max)}
-                          </div>
-                        ))}
+                      <div key={idx} className="flex flex-wrap items-center gap-1.5 p-2 bg-gray-50/50 dark:bg-slate-800/20 rounded-xl relative">
+                        {/* 注数序号 */}
+                        <div className="text-[10px] font-bold text-gray-300 dark:text-gray-600 w-4 text-center mr-1">{idx + 1}</div>
+                        
+                        {set.reds.map((n, i) => {
+                          const hit = isHit(n, 'red');
+                          return (
+                            <div key={`r-${idx}-${i}`} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
+                              ${hit ? 'bg-red-500 text-white shadow-md' : (matchingResult ? 'bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-gray-600 opacity-50' : 'bg-red-50 text-red-600 border justify-center border-red-100')}`}
+                            >
+                              {formatNum(n, config.red.max)}
+                            </div>
+                          );
+                        })}
+                        
+                        {set.blues.map((n, i) => {
+                          const hit = isHit(n, 'blue');
+                          return (
+                            <div key={`b-${idx}-${i}`} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
+                              ${hit ? 'bg-blue-500 text-white shadow-md' : (matchingResult ? 'bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-gray-600 opacity-50' : 'bg-blue-50 text-blue-600 border border-blue-100')}`}
+                            >
+                              {formatNum(n, config.blue.max)}
+                            </div>
+                          );
+                        })}
+                        
+                        {/* 如果全部对奖完成，显示是否命中 */}
+                        {matchingResult && (
+                           <div className="absolute right-3 opacity-60">
+                              <CheckCircle2 size={16} className={set.reds.some(n => isHit(n, 'red')) || set.blues.some(n => isHit(n, 'blue')) ? 'text-emerald-500' : 'text-gray-300'} />
+                           </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1066,7 +1129,7 @@ export default function App() {
                     {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} resultsData={resultsData} />}
                     {activeTab === 'sports' && <SportsView />}
                     {activeTab === 'results' && <ResultsView resultsData={resultsData} />}
-                    {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} />}
+                    {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} resultsData={resultsData} />}
                   </motion.div>
                 </AnimatePresence>
               </div>
