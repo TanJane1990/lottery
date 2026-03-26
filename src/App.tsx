@@ -53,8 +53,8 @@ const LOTTERIES: LotteryConfig[] = [
   { id: 'DLT', name: '大乐透', org: '体彩', theme: 'blue', red: { max: 35, count: 5 }, blue: { max: 12, count: 2 }, desc: '3元可中1800万', icon: '/icons/DLT.png', schedule: '每周一、三、六开奖' },
   { id: 'FC3D', name: '福彩3D', org: '福彩', theme: 'red', red: { max: 9, count: 3, allowDuplicate: true }, blue: { max: 0, count: 0 }, desc: '天天开奖，玩法简单', icon: '/icons/FC3D.png', schedule: '每日开奖' },
   { id: 'PL3', name: '排列3', org: '体彩', theme: 'blue', red: { max: 9, count: 3, allowDuplicate: true }, blue: { max: 0, count: 0 }, desc: '天天开奖，轻松赢', icon: '/icons/P3.png', schedule: '每日开奖' },
-  { id: 'QLC', name: '七乐彩', org: '福彩', theme: 'red', red: { max: 30, count: 7 }, blue: { max: 0, count: 0 }, desc: '百万大奖等你拿', schedule: '每周一、三、五开奖' },
-  { id: 'QXC', name: '七星彩', org: '体彩', theme: 'blue', red: { max: 9, count: 6, allowDuplicate: true }, blue: { max: 14, count: 1 }, desc: '经典玩法，惊喜不断', schedule: '每周二、五、日开奖' },
+  { id: 'QLC', name: '七乐彩', org: '福彩', theme: 'red', red: { max: 30, count: 7 }, blue: { max: 0, count: 0 }, desc: '百万大奖等你拿', icon: '/icons/QLC.png', schedule: '每周一、三、五开奖' },
+  { id: 'QXC', name: '七星彩', org: '体彩', theme: 'blue', red: { max: 9, count: 6, allowDuplicate: true }, blue: { max: 14, count: 1 }, desc: '经典玩法，惊喜不断', icon: '/icons/QXC.png', schedule: '每周二、五、日开奖' },
 ];
 
 // --- Helpers ---
