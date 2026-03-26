@@ -739,23 +739,21 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
-    const purchaseTime = new Date(ticket.date).getTime();
-    
-    let validResult = null;
-    // Results are sorted newest first. Loop from oldest to newest to find FIRST draw after purchase
-    for (let i = results.length - 1; i >= 0; i--) {
+    const ticketDate = new Date(ticket.date);
+    const ticketDateStr = `${ticketDate.getFullYear()}-${String(ticketDate.getMonth() + 1).padStart(2, '0')}-${String(ticketDate.getDate()).padStart(2, '0')}`;
+
+    // Results are sorted newest first (index 0 = latest draw).
+    // Strategy: find the LATEST draw whose date is <= ticket save date.
+    // This handles the real scenario: user buys a ticket, the draw happens, 
+    // then user opens the app and saves. We match the draw from that day or the most recent one before.
+    for (let i = 0; i < results.length; i++) {
       const res = results[i];
-      const drawDateString = res.date.includes(' ') ? res.date.split(' ')[0] : res.date;
-      // Assuming draws happen at 21:00 or 21:30. Set to 21:30 local time.
-      const drawTime = new Date(`${drawDateString}T21:30:00+08:00`).getTime();
-      
-      // We check the FIRST draw that happened strictly AFTER the exact time of purchase
-      if (drawTime > purchaseTime) {
-        validResult = res;
-        break; 
+      const drawDateStr = res.date.includes(' ') ? res.date.split(' ')[0] : res.date;
+      if (drawDateStr <= ticketDateStr) {
+        return res;
       }
     }
-    return validResult;
+    return null;
   };
 
   return (
