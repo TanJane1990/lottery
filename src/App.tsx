@@ -742,18 +742,21 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
     const ticketDate = new Date(ticket.date);
     const ticketDateStr = `${ticketDate.getFullYear()}-${String(ticketDate.getMonth() + 1).padStart(2, '0')}-${String(ticketDate.getDate()).padStart(2, '0')}`;
 
-    // Results are sorted newest first (index 0 = latest draw).
-    // Strategy: find the LATEST draw whose date is <= ticket save date.
-    // This handles the real scenario: user buys a ticket, the draw happens, 
-    // then user opens the app and saves. We match the draw from that day or the most recent one before.
+    // Flow: user saves numbers → buys ticket → official draw happens → we match.
+    // Results are sorted newest first (index 0 = latest).
+    // We need to find the FIRST draw that happened ON or AFTER the save date.
+    // Loop from newest to oldest; the last match before we pass the save date is our target.
+    let matched: any = null;
     for (let i = 0; i < results.length; i++) {
       const res = results[i];
       const drawDateStr = res.date.includes(' ') ? res.date.split(' ')[0] : res.date;
-      if (drawDateStr <= ticketDateStr) {
-        return res;
+      if (drawDateStr >= ticketDateStr) {
+        matched = res; // This draw is on or after the save date, keep going to find the earliest one
+      } else {
+        break; // We've passed into draws before the save date, stop
       }
     }
-    return null;
+    return matched;
   };
 
   return (
