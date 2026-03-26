@@ -812,19 +812,23 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
               return (
                 <div key={ticket.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative overflow-hidden">
                   <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-50 dark:border-slate-800">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`w-2 h-2 rounded-full ${THEME_CLASSES[config.theme].bg}`}></span>
-                        <span className="font-bold text-gray-800 dark:text-gray-100 ">{config.name}</span>
-                        {!matchingResult ? (
-                          <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">等待开奖</span>
-                        ) : (
-                          <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-medium">已对奖 (第{matchingResult.issue}期)</span>
-                        )}
-                      </div>
-                      <div className="text-[10px] text-gray-400 dark:text-gray-500 flex flex-col sm:flex-row sm:gap-4">
-                        <span>购买时间: {new Date(ticket.date).toLocaleString()}</span>
-                        {matchingResult && <span>开奖日期: {matchingResult.date.split(' ')[0]}</span>}
+                    <div className="flex items-center gap-3">
+                      {config.icon && (
+                        <img src={`.${config.icon}`} alt={config.name} className="w-10 h-10 rounded-xl object-contain shadow-sm border border-gray-100 dark:border-slate-700 bg-white p-0.5" />
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-gray-800 dark:text-gray-100 ">{config.name}</span>
+                          {!matchingResult ? (
+                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">等待开奖</span>
+                          ) : (
+                            <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-medium">已对奖 (第{matchingResult.issue}期)</span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-gray-400 dark:text-gray-500 flex flex-col sm:flex-row sm:gap-4">
+                          <span>购买时间: {new Date(ticket.date).toLocaleString()}</span>
+                          {matchingResult && <span>开奖日期: {matchingResult.date.split(' ')[0]}</span>}
+                        </div>
                       </div>
                     </div>
                     <button onClick={() => onDeleteTicket(ticket.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors p-2 -mr-2">
