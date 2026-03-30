@@ -647,7 +647,7 @@ export const SportsView = () => {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950">
       {/* Header */}
-      <div className="bg-gradient-to-br from-emerald-600 to-teal-800 pt-[calc(env(safe-area-inset-top,60px)+50px)] pb-4 px-4 shadow-lg">
+      <div className="bg-gradient-to-br from-emerald-600 to-teal-800 pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-4 px-4 shadow-lg">
         <h1 className="text-xl font-bold text-center text-white mb-3">竞彩中心</h1>
         
         <div className="flex bg-white/15 rounded-xl p-1 gap-1">

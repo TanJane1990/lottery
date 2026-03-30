@@ -486,7 +486,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+36px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
+      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-3 px-4 shadow-sm z-10 sticky top-0">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
         {/* Lottery Tabs */}
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
@@ -596,10 +596,10 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
       </div>
 
       {/* Action Bar */}
-      <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 p-4 pb-8 flex flex-col gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 px-3 py-3 pb-6 flex flex-col gap-2 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         
         {/* Global Options: Multiplier & DLT Extra */}
-        <div className="flex items-center justify-between px-1 border-b border-gray-50 dark:border-slate-800 pb-3 mb-1">
+        <div className="flex items-center justify-between px-1 border-b border-gray-50 dark:border-slate-800 pb-2 mb-0">
           <div className="flex items-center gap-3">
              <span className="text-[13px] font-bold text-gray-700 dark:text-gray-300">投倍</span>
              <div className="flex items-center bg-gray-100 dark:bg-slate-800 rounded-lg p-0.5 border border-gray-200 dark:border-slate-700 shadow-sm">
@@ -635,9 +635,10 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
 
         {mode === 'manual' ? (
           <div className="flex gap-3">
+      {/* ... keeping the button class updates ... */}
             <button
               onClick={() => { setManualReds([]); setManualBlues([]); }}
-              className="w-16 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 py-3.5 rounded-xl font-bold flex items-center justify-center hover:bg-gray-200 transition-all"
+              className="w-16 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 py-2.5 rounded-xl font-bold flex items-center justify-center hover:bg-gray-200 transition-all"
             >
               清空
             </button>
@@ -648,7 +649,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                 setManualReds([]); setManualBlues([]);
               }}
               style={combinations > 0 ? { background: getGradient(config.theme, config.id) } : {}}
-              className={`flex-1 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all ${combinations === 0 ? 'bg-gray-300 opacity-50 cursor-not-allowed text-white/70' : 'hover:opacity-90 active:scale-[0.98]'}`}
+              className={`flex-1 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md transition-all ${combinations === 0 ? 'bg-gray-300 opacity-50 cursor-not-allowed text-white/70' : 'hover:opacity-90 active:scale-[0.98]'}`}
             >
               <Save size={18} />
               保存到号码本
@@ -659,7 +660,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
             <button
               onClick={() => handleGenerate(1)}
               disabled={isGenerating}
-              className="flex-1 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-100 py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 active:bg-gray-200 transition-colors"
+              className="flex-1 bg-gray-100 dark:bg-slate-800 text-gray-800 dark:text-gray-100 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 active:bg-gray-200 transition-colors"
             >
               <RefreshCw size={18} className={isGenerating ? 'animate-spin' : ''} />
               机选1注
@@ -668,7 +669,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
               onClick={() => handleGenerate(5)}
               disabled={isGenerating}
               style={{ background: getGradient(config.theme, config.id) }}
-              className={`flex-1 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:opacity-90 active:scale-[0.98] transition-all`}
+              className={`flex-1 text-white py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-md hover:opacity-90 active:scale-[0.98] transition-all`}
             >
               <Sparkles size={18} />
               机选5注
@@ -723,7 +724,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
-      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+36px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
+      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-3 px-4 shadow-sm z-10 sticky top-0">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">历史开奖</h1>
         <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
           {LOTTERIES.map(l => (
@@ -831,7 +832,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
           </div>
 
           {/* "号码本" Number Book Section Divider */}
-          <div className="flex items-center justify-center gap-4 pt-10 pb-4">
+          <div className="flex items-center justify-center gap-4 pt-5 pb-2">
              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-gray-400 dark:via-slate-600 dark:to-slate-500 w-20"></div>
              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[15px] font-bold tracking-widest">
                 <History size={16} strokeWidth={2.5} /> 号码本
