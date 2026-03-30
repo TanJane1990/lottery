@@ -611,7 +611,8 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                    drag="x"
                    dragConstraints={{ left: -72, right: 0 }}
                    dragElastic={0.1}
-                   className="bg-white dark:bg-slate-900 rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative z-10 overflow-hidden flex items-center w-full touch-pan-y"
+                   dragMomentum={false}
+                   className="prevent-swipe bg-white dark:bg-slate-900 rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative z-10 overflow-hidden flex items-center w-full touch-pan-y"
                  >
                    {/* Decorative background number */}
                    <div className="absolute right-0 -mr-2 text-7xl font-black text-gray-50 dark:text-gray-800 opacity-60 select-none pointer-events-none">
@@ -825,7 +826,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
       <div className="flex-1 overflow-y-auto z-10 w-full relative pb-10">
         
         {/* Top Red Background Header - Replaced User with QR Code Donation */}
-        <div className="bg-gradient-to-b from-[#ff3b30] to-[#e61a1a] dark:from-[#cc1a10] dark:to-[#a90f0f] pt-[calc(env(safe-area-inset-top,24px)+32px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm border-b border-red-500/50 flex flex-col items-center">
+        <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,24px)+32px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm flex flex-col items-center">
           
           <div className="flex items-center gap-2 mb-2 text-white drop-shadow-sm">
              <Sparkles size={20} className="text-yellow-300" />
@@ -833,7 +834,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
              <Sparkles size={20} className="text-yellow-300" />
           </div>
           
-          <p className="text-xs text-red-100/95 font-medium mb-5 tracking-wide text-center px-6 leading-relaxed">
+          <p className="text-[22px] text-red-100/95 font-medium mb-5 tracking-wide text-center px-6 leading-relaxed">
             赞赏结善缘，随喜攒人品，大奖抱回家！
           </p>
           
@@ -1006,7 +1007,7 @@ export default function App() {
   const [touchStart, setTouchStart] = useState<{ x: number, y: number, time: number } | null>(null);
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    if ((e.target as Element).closest('.overflow-x-auto')) return;
+    if ((e.target as Element).closest('.overflow-x-auto, .prevent-swipe')) return;
     setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY, time: Date.now() });
   };
 
