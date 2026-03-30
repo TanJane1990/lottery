@@ -834,7 +834,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
           </div>
           
           <p className="text-xs text-red-100/95 font-medium mb-5 tracking-wide text-center px-6 leading-relaxed">
-            打赏攒人品，沾沾喜气早中大奖！🎟️
+            赞赏结善缘，随喜攒人品，大奖抱回家！
           </p>
           
           <div className="w-[130px] h-[130px] bg-white rounded-2xl overflow-hidden p-2 shadow-[0_8px_24px_rgba(200,20,20,0.6)] ring-4 ring-white/30 border-2 border-transparent">
