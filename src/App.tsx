@@ -612,13 +612,15 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                    dragConstraints={{ left: -72, right: 0 }}
                    dragElastic={0.1}
                    dragMomentum={false}
+                   dragDirectionLock={true}
+                   style={{ willChange: 'transform' }}
                    className="prevent-swipe bg-white dark:bg-slate-900 rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative z-10 overflow-hidden flex items-center w-full touch-pan-y"
                  >
                    {/* Decorative background number */}
                    <div className="absolute right-0 -mr-2 text-7xl font-black text-gray-50 dark:text-gray-800 opacity-60 select-none pointer-events-none">
                      {idx + 1}
                    </div>
-                   <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 relative z-10 w-full overflow-x-auto hide-scrollbar py-0.5">
+                   <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 relative z-10 w-full py-0.5 pointer-events-none">
                      {set.reds.map((n: number, i: number) => (
                        <Ball key={`r-${set.id || idx}-${i}`} num={n} color="red" max={config.red.max} lotteryId={config.id} />
                      ))}
