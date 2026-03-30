@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble, ScanLine } from 'lucide-react';
+import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble, ScanLine, MessageSquare, Settings, Headphones, Wallet, Ticket, Gift, CreditCard, Clock, CheckCircle, Bell, Grid, FileText, Smartphone, Crown, ShieldCheck, LineChart, BookOpen, Calculator, MapPin, XCircle, Star } from 'lucide-react';
 import { CapacitorHttp } from '@capacitor/core';
 import { SplashScreen } from './SplashScreen';
 import { SportsView } from './SportsView';
@@ -379,9 +379,9 @@ const Toast = ({ message, visible }: { message: string, visible: boolean }) => (
 // --- Views ---
 const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: LotteryId) => void, resultsData: Record<string, any[]> }) => {
   return (
-    <div className="pb-6">
+    <div className="pb-2">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,55px)+45px)] pb-16 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,20px)+30px)] pb-10 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
           <Trophy size={200} />
         </div>
@@ -390,7 +390,7 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
       </div>
 
       {/* Quick Access Grid */}
-      <div className="px-4 -mt-8 relative z-20">
+      <div className="px-4 -mt-4 relative z-20">
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-4">
           {LOTTERIES.slice(0, 4).map(lottery => (
             <div
@@ -600,7 +600,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
       </div>
 
       {/* Action Bar */}
-      <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 p-4 pb-safe flex flex-col gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+      <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 p-4 pb-8 flex flex-col gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
         {mode === 'manual' && !['FC3D', 'PL3', 'QXC'].includes(config.id) && (
           <div className="flex justify-between items-center px-1">
             <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -694,6 +694,15 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
     setVisibleCount(20); // Reset pagination when switching lottery
   };
 
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.currentTarget;
+    if (target.scrollHeight - target.scrollTop <= target.clientHeight + 50) {
+      if (hasMore) {
+        setVisibleCount(prev => prev + 20);
+      }
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+36px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
@@ -711,7 +720,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
           ))}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto bg-[#f5f5f5] dark:bg-slate-950 p-0 sm:p-4 space-y-0 sm:space-y-3">
+      <div onScroll={handleScroll} className="flex-1 overflow-y-auto bg-[#f5f5f5] dark:bg-slate-950 p-0 sm:p-4 space-y-0 sm:space-y-3">
         {results.length === 0 ? (
            <div className="p-8 m-4 text-center text-gray-400 dark:text-gray-500 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse">正在加载历史数据...</div>
         ) : (
@@ -720,13 +729,8 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
               <ResultCard key={res.issue || idx} lottery={config} result={res} />
             ))}
             {hasMore && (
-              <div className="p-4 text-center">
-                <button
-                  onClick={() => setVisibleCount(prev => prev + 30)}
-                  className="px-6 py-2.5 bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 rounded-full text-sm font-medium shadow-sm border border-gray-200 dark:border-slate-700 active:scale-95 transition-all"
-                >
-                  加载更多（已显示 {visibleCount}/{results.length} 期）
-                </button>
+              <div className="p-4 text-center text-sm text-gray-500">
+                正在加载更多...
               </div>
             )}
           </div>
@@ -741,143 +745,255 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
     if (!results || results.length === 0) return null;
     const ticketDate = new Date(ticket.date);
     const ticketDateStr = `${ticketDate.getFullYear()}-${String(ticketDate.getMonth() + 1).padStart(2, '0')}-${String(ticketDate.getDate()).padStart(2, '0')}`;
-
-    // Flow: user saves numbers → buys ticket → official draw happens → we match.
-    // Results are sorted newest first (index 0 = latest).
-    // We need to find the FIRST draw that happened ON or AFTER the save date.
-    // Loop from newest to oldest; the last match before we pass the save date is our target.
     let matched: any = null;
     for (let i = 0; i < results.length; i++) {
       const res = results[i];
       const drawDateStr = res.date.includes(' ') ? res.date.split(' ')[0] : res.date;
       if (drawDateStr >= ticketDateStr) {
-        matched = res; // This draw is on or after the save date, keep going to find the earliest one
+        matched = res;
       } else {
-        break; // We've passed into draws before the save date, stop
+        break;
       }
     }
     return matched;
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
-      <div className="bg-gradient-to-br from-slate-800 to-slate-900 pt-[calc(env(safe-area-inset-top,55px)+45px)] pb-6 px-6 shadow-lg">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-white dark:bg-slate-900 /10 rounded-full flex items-center justify-center border-2 border-white/20">
-            <User size={32} className="text-white" />
+    <div className="flex flex-col h-full bg-[#f4f5f7] dark:bg-[#0f172a] relative overflow-hidden w-full">
+      {/* Absolute background color filler to prevent Android layout bounce/whitespace issues */}
+      <div className="absolute inset-0 bg-[#f4f5f7] dark:bg-[#0f172a] z-[-1]"></div>
+      
+      {/* Scrollable Main content */}
+      <div className="flex-1 overflow-y-auto z-10 w-full relative pb-10">
+        
+        {/* Top Red Background Header */}
+        <div className="bg-gradient-to-b from-[#ff3b30] to-[#e61a1a] dark:from-[#cc1a10] dark:to-[#a90f0f] pt-[calc(env(safe-area-inset-top,24px)+20px)] pb-[3.5rem] px-5 rounded-b-[2.5rem] relative z-0 shadow-sm border-b border-red-500/50">
+          
+          {/* Top Right Icons */}
+          <div className="flex justify-end items-center gap-5 text-white mb-6">
+             <Settings size={22} className="cursor-pointer active:scale-95 transition-transform" />
+             <MessageSquare size={22} className="cursor-pointer active:scale-95 transition-transform" />
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-white">我的号码本</h1>
-            <p className="text-slate-300 text-sm mt-1">共保存 {savedTickets.length} 组号码</p>
+
+          {/* User Profile Info */}
+          <div className="flex items-center gap-4 text-white pb-6 pl-1">
+             <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-[2px] border-white/90 flex-shrink-0 bg-red-400 p-0.5 relative flex items-center justify-center shadow-lg">
+                <User size={38} className="text-white" strokeWidth={1.5} />
+             </div>
+             
+             <div className="flex-1 min-w-0 flex flex-col justify-center pb-1">
+                <h2 className="text-[24px] font-bold truncate tracking-wide text-white drop-shadow-md">幸运彩民</h2>
+                <div className="text-red-100/90 text-xs mt-1 font-medium tracking-wide">让每天都充满期待！</div>
+             </div>
           </div>
         </div>
-      </div>
 
-      <div className="flex-1 overflow-y-auto p-4 -mt-4 relative z-10 space-y-4">
-        {/* Donation Section */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-sm border border-gray-100 dark:border-slate-800 flex flex-col items-center text-center">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles size={20} className="text-yellow-500" />
-            <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100">“锦鲤”充电站</h2>
-            <Sparkles size={20} className="text-yellow-500" />
-          </div>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3 px-2">
-            给开发者充个电，祝你早日脱非入欧，喜中头奖！到时候别忘了回来还愿哦。
-          </p>
-          <div className="w-40 h-40 bg-gray-50 rounded-xl overflow-hidden p-2 border border-gray-100 dark:border-slate-700">
-            <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-lg shadow-inner" />
-          </div>
-        </div>
-
-        {savedTickets.length === 0 ? (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-8 text-center shadow-sm border border-gray-100 dark:border-slate-800">
-            <History size={48} className="mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500">暂无保存的号码</p>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">去选号页面生成并保存吧</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {savedTickets.map(ticket => {
-              const config = LOTTERIES.find(l => l.id === ticket.lotteryId)!;
-              const matchingResult = getMatchingResult(ticket, resultsData[ticket.lotteryId] || []);
-              
-              // Helper to check if a specific number was drawn
-              const isHit = (n: number, type: 'red' | 'blue') => {
-                if (!matchingResult) return false;
-                if (type === 'red' && matchingResult.reds.includes(n)) return true;
-                if (type === 'blue' && matchingResult.blues.includes(n)) return true;
-                return false;
-              };
-
-              return (
-                <div key={ticket.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative overflow-hidden">
-                  <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-50 dark:border-slate-800">
-                    <div className="flex items-center gap-3">
-                      {config.icon && (
-                        <img src={`.${config.icon}`} alt={config.name} className="w-10 h-10 rounded-xl object-contain shadow-sm border border-gray-100 dark:border-slate-700 bg-white p-0.5" />
-                      )}
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-bold text-gray-800 dark:text-gray-100 ">{config.name}</span>
-                          {!matchingResult ? (
-                            <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">等待开奖</span>
-                          ) : (
-                            <span className="text-xs bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-medium">已对奖 (第{matchingResult.issue}期)</span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-gray-400 dark:text-gray-500 flex flex-col sm:flex-row sm:gap-4">
-                          <span>购买时间: {new Date(ticket.date).toLocaleString()}</span>
-                          {matchingResult && <span>开奖日期: {matchingResult.date.split(' ')[0]}</span>}
-                        </div>
-                      </div>
-                    </div>
-                    <button onClick={() => onDeleteTicket(ticket.id)} className="text-gray-400 dark:text-gray-500 hover:text-red-500 transition-colors p-2 -mr-2">
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {ticket.numbers.map((set, idx) => (
-                      <div key={idx} className="flex flex-wrap items-center gap-1.5 p-2 bg-gray-50/50 dark:bg-slate-800/20 rounded-xl relative">
-                        {/* 注数序号 */}
-                        <div className="text-[10px] font-bold text-gray-300 dark:text-gray-600 w-4 text-center mr-1">{idx + 1}</div>
-                        
-                        {set.reds.map((n, i) => {
-                          const hit = isHit(n, 'red');
-                          return (
-                            <div key={`r-${idx}-${i}`} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
-                              ${hit ? 'bg-red-500 text-white shadow-md' : (matchingResult ? 'bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-gray-600 opacity-50' : 'bg-red-50 text-red-600 border justify-center border-red-100')}`}
-                            >
-                              {formatNum(n, config.red.max)}
-                            </div>
-                          );
-                        })}
-                        
-                        {set.blues.map((n, i) => {
-                          const hit = isHit(n, 'blue');
-                          return (
-                            <div key={`b-${idx}-${i}`} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all
-                              ${hit ? 'bg-blue-500 text-white shadow-md' : (matchingResult ? 'bg-gray-100 text-gray-400 dark:bg-slate-800 dark:text-gray-600 opacity-50' : 'bg-blue-50 text-blue-600 border border-blue-100')}`}
-                            >
-                              {formatNum(n, config.blue.max)}
-                            </div>
-                          );
-                        })}
-                        
-                        {/* 如果全部对奖完成，显示是否命中 */}
-                        {matchingResult && (
-                           <div className="absolute right-3 opacity-60">
-                              <CheckCircle2 size={16} className={set.reds.some(n => isHit(n, 'red')) || set.blues.some(n => isHit(n, 'blue')) ? 'text-emerald-500' : 'text-gray-300'} />
-                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+        {/* Content Wrapper pulled up to overlap red header */}
+        <div className="-mt-[4.5rem] px-4 relative z-10 space-y-4">
+          
+          {/* Unified User Card (VIP Top + Stats Bottom) */}
+          <div className="rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col border border-white/50 dark:border-white/5">
+             {/* VIP Banner Top */}
+             <div className="bg-[#242b38] px-4 py-3.5 flex justify-between items-center bg-gradient-to-r from-[#1c222e] to-[#2b3341]">
+                <div className="flex items-center gap-2">
+                  <Star size={16} fill="#facc15" className="text-yellow-400" />
+                  <span className="text-[#facc15] font-bold text-sm tracking-widest drop-shadow-sm">彩票 PLUS 会员</span>
+                  <span className="text-gray-500 mx-1.5 opacity-60">|</span>
+                  <span className="text-[#a0aab8] text-xs font-medium tracking-wide">尊享10大特权</span>
                 </div>
-              );
-            })}
+                <button className="bg-gradient-to-br from-[#fbe375] to-[#f4c632] text-[#5e4b3c] text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_2px_4px_rgba(250,204,21,0.2)]">
+                  立即开通
+                </button>
+             </div>
+             
+             {/* Stats Box Bottom */}
+             <div className="bg-white dark:bg-slate-900 px-2 py-5 flex justify-between items-center text-center">
+                <div className="flex flex-col items-center flex-1 relative group cursor-pointer">
+                   <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">{savedTickets.length}</div>
+                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium group-hover:text-gray-800 transition-colors">保存注数</div>
+                </div>
+                <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
+                   <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">0</div>
+                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium group-hover:text-gray-800 transition-colors">中奖次数</div>
+                </div>
+                <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
+                   <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">0.00</div>
+                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium group-hover:text-gray-800 transition-colors">累计投入</div>
+                </div>
+                <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
+                   <div className="font-extrabold text-[22px] text-red-500 dark:text-red-400 font-sans tracking-tight block truncate w-full px-1">0.00</div>
+                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium group-hover:text-gray-800 transition-colors">累计中奖</div>
+                </div>
+             </div>
           </div>
-        )}
+
+          {/* "我的彩票" My Lottery Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+             <div className="flex justify-between items-center mb-5 px-1">
+                <h3 className="font-bold text-base text-gray-800 dark:text-gray-100 tracking-wide">我的彩票</h3>
+                <div className="text-[11px] text-gray-400 flex items-center gap-0.5 cursor-pointer hover:text-gray-600 transition-colors font-medium">全部记录 <ChevronRight size={14} className="opacity-70" /></div>
+             </div>
+             <div className="flex justify-around items-center px-1">
+                <div className="flex flex-col items-center gap-2.5 cursor-pointer active:opacity-70 hover:scale-105 transition-all group">
+                   <div className="w-11 h-11 rounded-full border border-gray-100 bg-gray-50/50 dark:bg-slate-800/50 flex items-center justify-center text-[#556987] group-hover:bg-gray-100 dark:group-hover:bg-slate-800 transition-colors">
+                      <Clock size={22} strokeWidth={2} />
+                   </div>
+                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">待开奖</span>
+                </div>
+                <div className="flex flex-col items-center gap-2.5 cursor-pointer active:opacity-70 hover:scale-105 transition-all group">
+                   <div className="w-11 h-11 rounded-full border border-red-100 bg-red-50/50 dark:bg-red-900/20 flex items-center justify-center text-red-500 group-hover:bg-red-100 dark:group-hover:bg-red-900/40 transition-colors">
+                      <CheckCircle2 size={22} strokeWidth={2} />
+                   </div>
+                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">已中奖</span>
+                </div>
+                <div className="flex flex-col items-center gap-2.5 cursor-pointer active:opacity-70 hover:scale-105 transition-all group">
+                   <div className="w-11 h-11 rounded-full border border-gray-100 bg-gray-50/50 dark:bg-slate-800/50 flex items-center justify-center text-gray-400 group-hover:bg-gray-100 dark:group-hover:bg-slate-800 transition-colors">
+                      <XCircle size={22} strokeWidth={2} />
+                   </div>
+                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">未中奖</span>
+                </div>
+                <div className="flex flex-col items-center gap-2.5 cursor-pointer active:opacity-70 hover:scale-105 transition-all group">
+                   <div className="w-11 h-11 rounded-full border border-yellow-100 bg-yellow-50/50 dark:bg-yellow-900/20 flex items-center justify-center text-yellow-500 group-hover:bg-yellow-100 dark:group-hover:bg-yellow-900/40 transition-colors">
+                      <Star size={22} strokeWidth={2} />
+                   </div>
+                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">我的收藏</span>
+                </div>
+             </div>
+          </div>
+
+          {/* "更多工具" More Tools Card */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
+             <div className="flex justify-between items-center mb-5 px-1">
+                <h3 className="font-bold text-base text-gray-800 dark:text-gray-100 tracking-wide">更多工具</h3>
+             </div>
+             <div className="flex justify-around items-center px-1 pb-1">
+                <div className="flex flex-col items-center gap-3 cursor-pointer active:opacity-70 hover:-translate-y-0.5 transition-all">
+                   <LineChart size={28} strokeWidth={1.5} className="text-[#3b82f6] drop-shadow-sm" />
+                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">走势图</span>
+                </div>
+                <div className="flex flex-col items-center gap-3 cursor-pointer active:opacity-70 hover:-translate-y-0.5 transition-all">
+                   <BookOpen size={28} strokeWidth={1.5} className="text-[#10b981] drop-shadow-sm" />
+                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">玩法说明</span>
+                </div>
+                <div className="flex flex-col items-center gap-3 cursor-pointer active:opacity-70 hover:-translate-y-0.5 transition-all">
+                   <Calculator size={28} strokeWidth={1.5} className="text-[#8b5cf6] drop-shadow-sm" />
+                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">奖金计算</span>
+                </div>
+                <div className="flex flex-col items-center gap-3 cursor-pointer active:opacity-70 hover:-translate-y-0.5 transition-all">
+                   <MapPin size={28} strokeWidth={1.5} className="text-[#f97316] drop-shadow-sm" />
+                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">附近网点</span>
+                </div>
+             </div>
+          </div>
+
+          {/* "号码本" Number Book Section Divider */}
+          <div className="flex items-center justify-center gap-4 pt-5 pb-3">
+             <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-gray-300 dark:via-slate-700 dark:to-slate-600 w-20"></div>
+             <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[15px] font-bold tracking-wide">
+                <History size={16} strokeWidth={2.5} /> 号码本
+             </div>
+             <div className="h-px bg-gradient-to-l from-transparent via-gray-200 to-gray-300 dark:via-slate-700 dark:to-slate-600 w-20"></div>
+          </div>
+
+          {/* Saved Tickets content matching the empty state or showing list */}
+          {savedTickets.length === 0 ? (
+            <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center shadow-[0_2px_8px_rgba(0,0,0,0.02)] mb-8">
+              <History size={64} strokeWidth={1} className="mx-auto text-[#e2e8f0] dark:text-slate-700 mb-5" />
+              <p className="text-gray-600 dark:text-gray-300 text-[15px] font-bold mb-1.5">暂无保存的号码</p>
+              <p className="text-[#94a3b8] dark:text-gray-500 text-xs font-medium">去选号页面生成并保存吧</p>
+            </div>
+          ) : (
+            <div className="space-y-3.5 pb-8">
+              {savedTickets.map(ticket => {
+                const config = LOTTERIES.find(l => l.id === ticket.lotteryId)!;
+                const matchingResult = getMatchingResult(ticket, resultsData[ticket.lotteryId] || []);
+                
+                const isHit = (n: number, type: 'red' | 'blue') => {
+                  if (!matchingResult) return false;
+                  if (type === 'red' && matchingResult.reds.includes(n)) return true;
+                  if (type === 'blue' && matchingResult.blues.includes(n)) return true;
+                  return false;
+                };
+
+                return (
+                  <div key={ticket.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)] relative overflow-hidden">
+                    <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-50 dark:border-slate-800/80">
+                      <div className="flex items-center gap-3">
+                        {config.icon && (
+                          <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-100 dark:border-slate-700 bg-white shadow-sm flex-shrink-0 flex items-center justify-center p-1 relative">
+                             <img src={`.${config.icon}`} alt={config.name} className="w-full h-full object-contain" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="font-bold text-gray-800 dark:text-gray-100 text-[15px]">{config.name}</span>
+                            {!matchingResult ? (
+                              <span className="text-[10px] bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-100 dark:border-transparent font-medium shadow-sm leading-none">等待开奖</span>
+                            ) : (
+                              <span className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-transparent font-medium shadow-sm leading-none">第{matchingResult.issue}期反馈</span>
+                            )}
+                          </div>
+                          <div className="flex items-center text-[11px] text-gray-400 dark:text-gray-500 gap-1 tracking-wide font-mono mt-1">
+                            {new Date(ticket.date).toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <button onClick={() => onDeleteTicket(ticket.id)} className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-800/50 text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-all active:scale-90 shadow-sm border border-transparent hover:border-red-100">
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-2 mt-2">
+                      {ticket.numbers.map((set, idx) => {
+                        let localHitsR = 0; let localHitsB = 0;
+                        if (matchingResult) {
+                           set.reds.forEach(n => { if (isHit(n, 'red')) localHitsR++; });
+                           set.blues.forEach(n => { if (isHit(n, 'blue')) localHitsB++; });
+                        }
+                        const hasLocalHit = localHitsR > 0 || localHitsB > 0;
+
+                        return (
+                          <div key={idx} className="flex flex-wrap items-center gap-1.5 p-2 bg-[#fafafa] dark:bg-slate-800/20 rounded-xl relative border border-white dark:border-transparent hover:border-gray-100 transition-colors">
+                            <div className="text-[11px] font-bold text-gray-300 dark:text-gray-600 w-5 text-center mr-0.5">{(idx + 1).toString().padStart(2, '0')}</div>
+                            
+                            {set.reds.map((n, i) => {
+                              const hit = isHit(n, 'red');
+                              return (
+                                <div key={`r-${idx}-${i}`} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${hit ? 'bg-gradient-to-br from-red-400 to-red-600 text-white shadow-md shadow-red-500/30 scale-105' : (matchingResult ? 'bg-white dark:bg-slate-900 text-gray-300 dark:text-gray-600 border border-gray-100 dark:border-slate-800' : 'bg-red-50 text-red-600 border border-red-100')}`}>
+                                  {formatNum(n, config.red.max)}
+                                </div>
+                              );
+                            })}
+                            
+                            {set.blues.map((n, i) => {
+                              const hit = isHit(n, 'blue');
+                              return (
+                                <div key={`b-${idx}-${i}`} className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${hit ? 'bg-gradient-to-br from-blue-400 to-blue-600 text-white shadow-md shadow-blue-500/30 scale-105' : (matchingResult ? 'bg-white dark:bg-slate-900 text-gray-300 dark:text-gray-600 border border-gray-100 dark:border-slate-800' : 'bg-blue-50 text-blue-600 border border-blue-100')}`}>
+                                  {formatNum(n, config.blue.max)}
+                                </div>
+                              );
+                            })}
+                            
+                            {matchingResult && (
+                               <div className="absolute right-2.5 opacity-90 pointer-events-none">
+                                  {hasLocalHit ? (
+                                    <div className="text-[10px] text-white bg-emerald-500 px-2.5 py-0.5 rounded shadow-sm font-bold tracking-widest flex items-center">中了</div>
+                                  ) : (
+                                    <div className="text-[10px] text-gray-400 bg-gray-100 border border-gray-200 dark:border-slate-700 dark:bg-slate-800/80 px-2 py-0.5 rounded font-medium shadow-sm">未中</div>
+                                  )}
+                               </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
