@@ -789,6 +789,26 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
         {/* Content Wrapper */}
         <div className="-mt-8 px-4 relative z-10 space-y-4">
           
+          {/* Stats Box */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] px-2 py-5 flex justify-between items-center text-center border border-white/50 dark:border-white/5">
+             <div className="flex flex-col items-center flex-1 relative group cursor-pointer">
+                <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">{savedTickets.length}</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">保存注数</div>
+             </div>
+             <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
+                <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">0</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">中奖次数</div>
+             </div>
+             <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
+                <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">0.00</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">累计投入</div>
+             </div>
+             <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
+                <div className="font-extrabold text-[22px] text-red-500 dark:text-red-400 font-sans tracking-tight block truncate w-full px-1">0.00</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">累计中奖</div>
+             </div>
+          </div>
+
           {/* "号码本" Number Book Section Divider */}
           <div className="flex items-center justify-center gap-4 pt-10 pb-4">
              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-gray-400 dark:via-slate-600 dark:to-slate-500 w-20"></div>
