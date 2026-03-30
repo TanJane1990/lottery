@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble, ScanLine, MessageSquare, Settings, Headphones, Wallet, Ticket, Gift, CreditCard, Clock, CheckCircle, Bell, Grid, FileText, Smartphone, Crown, ShieldCheck, LineChart, BookOpen, Calculator, MapPin, XCircle, Star } from 'lucide-react';
+import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble, ScanLine, MessageSquare, Settings, Headphones, Wallet, Ticket, Gift, CreditCard, Clock, CheckCircle, Bell, Grid, FileText, Smartphone, Crown, ShieldCheck, LineChart, BookOpen, Calculator, MapPin, XCircle, Star, X } from 'lucide-react';
 import { CapacitorHttp } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from './SplashScreen';
@@ -30,6 +30,16 @@ interface SavedTicket {
   multiplier?: number;
   isDltExtra?: boolean;
 }
+
+const pickViewStateCache = {
+  selectedLotteryId: '' as string,
+  mode: 'smart' as 'smart' | 'manual',
+  sets: [] as any[],
+  manualReds: [] as number[],
+  manualBlues: [] as number[],
+  multiplier: 1 as number,
+  isDltExtra: false as boolean,
+};
 
 // --- Constants ---
 const THEME_CLASSES = {
@@ -439,21 +449,38 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
 
 const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: { selectedLotteryId: LotteryId, onSelectLottery: (id: LotteryId) => void, onSave: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean) => void, resultsData: Record<string, any[]> }) => {
   const config = LOTTERIES.find(l => l.id === selectedLotteryId)!;
-  const [sets, setSets] = useState<{reds: number[], blues: number[]}[]>([]);
+  const isSameLottery = pickViewStateCache.selectedLotteryId === selectedLotteryId;
+  const [sets, setSets] = useState<any[]>(isSameLottery ? pickViewStateCache.sets : []);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [multiplier, setMultiplier] = useState(1);
+  const [multiplier, setMultiplier] = useState(isSameLottery ? pickViewStateCache.multiplier : 1);
   
   // Manual Pick State
-  const [mode, setMode] = useState<'smart' | 'manual'>('smart');
-  const [manualReds, setManualReds] = useState<number[]>([]);
-  const [manualBlues, setManualBlues] = useState<number[]>([]);
-  const [isDltExtra, setIsDltExtra] = useState(false); // For DLT 追加
+  const [mode, setMode] = useState<'smart' | 'manual'>(isSameLottery ? pickViewStateCache.mode : 'smart');
+  const [manualReds, setManualReds] = useState<number[]>(isSameLottery ? pickViewStateCache.manualReds : []);
+  const [manualBlues, setManualBlues] = useState<number[]>(isSameLottery ? pickViewStateCache.manualBlues : []);
+  const [isDltExtra, setIsDltExtra] = useState(isSameLottery ? pickViewStateCache.isDltExtra : false); // For DLT 追加
 
   useEffect(() => {
-    setManualReds([]);
-    setManualBlues([]);
-    setSets([]);
-    setIsDltExtra(false);
+    pickViewStateCache.selectedLotteryId = selectedLotteryId;
+    pickViewStateCache.mode = mode;
+    pickViewStateCache.sets = sets;
+    pickViewStateCache.manualReds = manualReds;
+    pickViewStateCache.manualBlues = manualBlues;
+    pickViewStateCache.multiplier = multiplier;
+    pickViewStateCache.isDltExtra = isDltExtra;
+  }, [selectedLotteryId, mode, sets, manualReds, manualBlues, multiplier, isDltExtra]);
+
+  const prevLotteryId = React.useRef(selectedLotteryId);
+  const prevMode = React.useRef(mode);
+  useEffect(() => {
+    if (prevLotteryId.current !== selectedLotteryId || prevMode.current !== mode) {
+      setManualReds([]);
+      setManualBlues([]);
+      setSets([]);
+      setIsDltExtra(false);
+      prevLotteryId.current = selectedLotteryId;
+      prevMode.current = mode;
+    }
   }, [selectedLotteryId, mode]);
 
   const currentStrategy = React.useMemo(() => getStrategy(config, isDltExtra), [config, isDltExtra]);
@@ -477,7 +504,9 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
     setIsGenerating(true);
     setTimeout(() => {
       const history = resultsData[config.id] || [];
-      const newSets = Array.from({ length: count }, () => generateUniqueNumbers(config, history));
+      const newSets = Array.from({ length: count }, () => {
+        return { ...generateUniqueNumbers(config, history), id: Math.random().toString(36).substring(7) };
+      });
       setSets(prev => [...newSets, ...prev].slice(0, 10)); // Keep max 10 in view
       setIsGenerating(false);
     }, 400);
@@ -570,25 +599,34 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
             </motion.div>
           ) : (
             sets.map((set, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                className="bg-white dark:bg-slate-900 rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative overflow-hidden flex items-center w-full"
-              >
-                {/* Decorative background number */}
-                <div className="absolute right-0 -mr-2 text-7xl font-black text-gray-50 dark:text-gray-800 opacity-60 select-none pointer-events-none">
-                  {idx + 1}
-                </div>
-                <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 relative z-10 w-full overflow-x-auto hide-scrollbar py-0.5">
-                  {set.reds.map((n, i) => (
-                    <Ball key={`r-${idx}-${i}`} num={n} color="red" max={config.red.max} lotteryId={config.id} />
-                  ))}
-                  {set.blues.map((n, i) => (
-                    <Ball key={`b-${idx}-${i}`} num={n} color="blue" max={config.blue.max} lotteryId={config.id} />
-                  ))}
-                </div>
-              </motion.div>
+              <div key={set.id || idx} className="relative w-full overflow-hidden rounded-2xl">
+                 <div className="absolute inset-y-0 right-0 w-24 bg-red-500 rounded-r-2xl flex items-center justify-end pr-5">
+                    <button onClick={() => setSets(prev => prev.filter(s => (s.id ? s.id !== set.id : prev.indexOf(s) !== idx)))} className="text-white flex flex-col items-center">
+                       <Trash2 size={20} strokeWidth={2} />
+                       <span className="text-[10px] tracking-wider mt-1 opacity-90 font-bold">删除</span>
+                    </button>
+                 </div>
+                 
+                 <motion.div
+                   drag="x"
+                   dragConstraints={{ left: -72, right: 0 }}
+                   dragElastic={0.1}
+                   className="bg-white dark:bg-slate-900 rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative z-10 overflow-hidden flex items-center w-full touch-pan-y"
+                 >
+                   {/* Decorative background number */}
+                   <div className="absolute right-0 -mr-2 text-7xl font-black text-gray-50 dark:text-gray-800 opacity-60 select-none pointer-events-none">
+                     {idx + 1}
+                   </div>
+                   <div className="flex flex-nowrap items-center gap-1.5 sm:gap-2 relative z-10 w-full overflow-x-auto hide-scrollbar py-0.5">
+                     {set.reds.map((n: number, i: number) => (
+                       <Ball key={`r-${set.id || idx}-${i}`} num={n} color="red" max={config.red.max} lotteryId={config.id} />
+                     ))}
+                     {set.blues.map((n: number, i: number) => (
+                       <Ball key={`b-${set.id || idx}-${i}`} num={n} color="blue" max={config.blue.max} lotteryId={config.id} />
+                     ))}
+                   </div>
+                 </motion.div>
+              </div>
             ))
           )}
         </AnimatePresence>
@@ -684,7 +722,8 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                 </button>
                 <button
                   onClick={() => {
-                    onSave(config.id, sets, multiplier, isDltExtra);
+                    const cleanedSets = sets.map(({ reds, blues }) => ({ reds, blues }));
+                    onSave(config.id, cleanedSets, multiplier, isDltExtra);
                     setSets([]);
                   }}
                   className="w-14 bg-[#5eb47d] text-white rounded-xl flex items-center justify-center shadow-md hover:bg-[#4ea26c] active:scale-[0.98] transition-all"
@@ -795,7 +834,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
           </div>
           
           <p className="text-xs text-red-100/95 font-medium mb-5 tracking-wide text-center px-6 leading-relaxed">
-            给开发者充个电，祝你早日脱非入欧，拔得头筹！到时候中了大奖，别忘了回来还愿哦。
+            支持开发者持续更新，让好运加满！期待您早日拔得头筹✨
           </p>
           
           <div className="w-[130px] h-[130px] bg-white rounded-2xl overflow-hidden p-2 shadow-[0_8px_24px_rgba(200,20,20,0.6)] ring-4 ring-white/30 border-2 border-transparent">
