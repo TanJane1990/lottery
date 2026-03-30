@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble, ScanLine, MessageSquare, Settings, Headphones, Wallet, Ticket, Gift, CreditCard, Clock, CheckCircle, Bell, Grid, FileText, Smartphone, Crown, ShieldCheck, LineChart, BookOpen, Calculator, MapPin, XCircle, Star } from 'lucide-react';
 import { CapacitorHttp } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from './SplashScreen';
 import { SportsView } from './SportsView';
 
@@ -766,133 +767,35 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
       {/* Scrollable Main content */}
       <div className="flex-1 overflow-y-auto z-10 w-full relative pb-10">
         
-        {/* Top Red Background Header */}
-        <div className="bg-gradient-to-b from-[#ff3b30] to-[#e61a1a] dark:from-[#cc1a10] dark:to-[#a90f0f] pt-[calc(env(safe-area-inset-top,24px)+20px)] pb-[3.5rem] px-5 rounded-b-[2.5rem] relative z-0 shadow-sm border-b border-red-500/50">
+        {/* Top Red Background Header - Replaced User with QR Code Donation */}
+        <div className="bg-gradient-to-b from-[#ff3b30] to-[#e61a1a] dark:from-[#cc1a10] dark:to-[#a90f0f] pt-[calc(env(safe-area-inset-top,24px)+32px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm border-b border-red-500/50 flex flex-col items-center">
           
-          {/* Top Right Icons */}
-          <div className="flex justify-end items-center gap-5 text-white mb-6">
-             <Settings size={22} className="cursor-pointer active:scale-95 transition-transform" />
-             <MessageSquare size={22} className="cursor-pointer active:scale-95 transition-transform" />
+          <div className="flex items-center gap-2 mb-2 text-white drop-shadow-sm">
+             <Sparkles size={20} className="text-yellow-300" />
+             <h2 className="text-[18px] font-bold tracking-widest text-white font-sans">“锦鲤”体验站</h2>
+             <Sparkles size={20} className="text-yellow-300" />
           </div>
-
-          {/* User Profile Info */}
-          <div className="flex items-center gap-4 text-white pb-6 pl-1">
-             <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-[2px] border-white/90 flex-shrink-0 bg-red-400 p-0.5 relative flex items-center justify-center shadow-lg">
-                <User size={38} className="text-white" strokeWidth={1.5} />
-             </div>
-             
-             <div className="flex-1 min-w-0 flex flex-col justify-center pb-1">
-                <h2 className="text-[24px] font-bold truncate tracking-wide text-white drop-shadow-md">幸运彩民</h2>
-                <div className="text-red-100/90 text-xs mt-1 font-medium tracking-wide">让每天都充满期待！</div>
-             </div>
+          
+          <p className="text-xs text-red-100/95 font-medium mb-5 tracking-wide text-center px-6 leading-relaxed">
+            给开发者充个电，祝你早日脱非入欧，拔得头筹！到时候中了大奖，别忘了回来还愿哦。
+          </p>
+          
+          <div className="w-[130px] h-[130px] bg-white rounded-2xl overflow-hidden p-2 shadow-[0_8px_24px_rgba(200,20,20,0.6)] ring-4 ring-white/30 border-2 border-transparent">
+            <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-xl border border-gray-100 dark:border-slate-700" />
           </div>
+          
         </div>
 
-        {/* Content Wrapper pulled up to overlap red header */}
-        <div className="-mt-[4.5rem] px-4 relative z-10 space-y-4">
+        {/* Content Wrapper */}
+        <div className="-mt-8 px-4 relative z-10 space-y-4">
           
-          {/* Unified User Card (VIP Top + Stats Bottom) */}
-          <div className="rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] overflow-hidden flex flex-col border border-white/50 dark:border-white/5">
-             {/* VIP Banner Top */}
-             <div className="bg-[#242b38] px-4 py-3.5 flex justify-between items-center bg-gradient-to-r from-[#1c222e] to-[#2b3341]">
-                <div className="flex items-center gap-2">
-                  <Star size={16} fill="#facc15" className="text-yellow-400" />
-                  <span className="text-[#facc15] font-bold text-sm tracking-widest drop-shadow-sm">彩票 PLUS 会员</span>
-                  <span className="text-gray-500 mx-1.5 opacity-60">|</span>
-                  <span className="text-[#a0aab8] text-xs font-medium tracking-wide">尊享10大特权</span>
-                </div>
-                <button className="bg-gradient-to-br from-[#fbe375] to-[#f4c632] text-[#5e4b3c] text-[11px] font-bold px-3.5 py-1.5 rounded-full hover:scale-105 active:scale-95 transition-all shadow-[0_2px_4px_rgba(250,204,21,0.2)]">
-                  立即开通
-                </button>
-             </div>
-             
-             {/* Stats Box Bottom */}
-             <div className="bg-white dark:bg-slate-900 px-2 py-5 flex justify-between items-center text-center">
-                <div className="flex flex-col items-center flex-1 relative group cursor-pointer">
-                   <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">{savedTickets.length}</div>
-                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium group-hover:text-gray-800 transition-colors">保存注数</div>
-                </div>
-                <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
-                   <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">0</div>
-                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium group-hover:text-gray-800 transition-colors">中奖次数</div>
-                </div>
-                <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
-                   <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">0.00</div>
-                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium group-hover:text-gray-800 transition-colors">累计投入</div>
-                </div>
-                <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
-                   <div className="font-extrabold text-[22px] text-red-500 dark:text-red-400 font-sans tracking-tight block truncate w-full px-1">0.00</div>
-                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium group-hover:text-gray-800 transition-colors">累计中奖</div>
-                </div>
-             </div>
-          </div>
-
-          {/* "我的彩票" My Lottery Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
-             <div className="flex justify-between items-center mb-5 px-1">
-                <h3 className="font-bold text-base text-gray-800 dark:text-gray-100 tracking-wide">我的彩票</h3>
-                <div className="text-[11px] text-gray-400 flex items-center gap-0.5 cursor-pointer hover:text-gray-600 transition-colors font-medium">全部记录 <ChevronRight size={14} className="opacity-70" /></div>
-             </div>
-             <div className="flex justify-around items-center px-1">
-                <div className="flex flex-col items-center gap-2.5 cursor-pointer active:opacity-70 hover:scale-105 transition-all group">
-                   <div className="w-11 h-11 rounded-full border border-gray-100 bg-gray-50/50 dark:bg-slate-800/50 flex items-center justify-center text-[#556987] group-hover:bg-gray-100 dark:group-hover:bg-slate-800 transition-colors">
-                      <Clock size={22} strokeWidth={2} />
-                   </div>
-                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">待开奖</span>
-                </div>
-                <div className="flex flex-col items-center gap-2.5 cursor-pointer active:opacity-70 hover:scale-105 transition-all group">
-                   <div className="w-11 h-11 rounded-full border border-red-100 bg-red-50/50 dark:bg-red-900/20 flex items-center justify-center text-red-500 group-hover:bg-red-100 dark:group-hover:bg-red-900/40 transition-colors">
-                      <CheckCircle2 size={22} strokeWidth={2} />
-                   </div>
-                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">已中奖</span>
-                </div>
-                <div className="flex flex-col items-center gap-2.5 cursor-pointer active:opacity-70 hover:scale-105 transition-all group">
-                   <div className="w-11 h-11 rounded-full border border-gray-100 bg-gray-50/50 dark:bg-slate-800/50 flex items-center justify-center text-gray-400 group-hover:bg-gray-100 dark:group-hover:bg-slate-800 transition-colors">
-                      <XCircle size={22} strokeWidth={2} />
-                   </div>
-                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">未中奖</span>
-                </div>
-                <div className="flex flex-col items-center gap-2.5 cursor-pointer active:opacity-70 hover:scale-105 transition-all group">
-                   <div className="w-11 h-11 rounded-full border border-yellow-100 bg-yellow-50/50 dark:bg-yellow-900/20 flex items-center justify-center text-yellow-500 group-hover:bg-yellow-100 dark:group-hover:bg-yellow-900/40 transition-colors">
-                      <Star size={22} strokeWidth={2} />
-                   </div>
-                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">我的收藏</span>
-                </div>
-             </div>
-          </div>
-
-          {/* "更多工具" More Tools Card */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)]">
-             <div className="flex justify-between items-center mb-5 px-1">
-                <h3 className="font-bold text-base text-gray-800 dark:text-gray-100 tracking-wide">更多工具</h3>
-             </div>
-             <div className="flex justify-around items-center px-1 pb-1">
-                <div className="flex flex-col items-center gap-3 cursor-pointer active:opacity-70 hover:-translate-y-0.5 transition-all">
-                   <LineChart size={28} strokeWidth={1.5} className="text-[#3b82f6] drop-shadow-sm" />
-                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">走势图</span>
-                </div>
-                <div className="flex flex-col items-center gap-3 cursor-pointer active:opacity-70 hover:-translate-y-0.5 transition-all">
-                   <BookOpen size={28} strokeWidth={1.5} className="text-[#10b981] drop-shadow-sm" />
-                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">玩法说明</span>
-                </div>
-                <div className="flex flex-col items-center gap-3 cursor-pointer active:opacity-70 hover:-translate-y-0.5 transition-all">
-                   <Calculator size={28} strokeWidth={1.5} className="text-[#8b5cf6] drop-shadow-sm" />
-                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">奖金计算</span>
-                </div>
-                <div className="flex flex-col items-center gap-3 cursor-pointer active:opacity-70 hover:-translate-y-0.5 transition-all">
-                   <MapPin size={28} strokeWidth={1.5} className="text-[#f97316] drop-shadow-sm" />
-                   <span className="text-[11px] text-gray-600 dark:text-gray-400 font-medium">附近网点</span>
-                </div>
-             </div>
-          </div>
-
           {/* "号码本" Number Book Section Divider */}
-          <div className="flex items-center justify-center gap-4 pt-5 pb-3">
-             <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-gray-300 dark:via-slate-700 dark:to-slate-600 w-20"></div>
-             <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[15px] font-bold tracking-wide">
+          <div className="flex items-center justify-center gap-4 pt-10 pb-4">
+             <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-gray-400 dark:via-slate-600 dark:to-slate-500 w-20"></div>
+             <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[15px] font-bold tracking-widest">
                 <History size={16} strokeWidth={2.5} /> 号码本
              </div>
-             <div className="h-px bg-gradient-to-l from-transparent via-gray-200 to-gray-300 dark:via-slate-700 dark:to-slate-600 w-20"></div>
+             <div className="h-px bg-gradient-to-l from-transparent via-gray-300 to-gray-400 dark:via-slate-600 dark:to-slate-500 w-20"></div>
           </div>
 
           {/* Saved Tickets content matching the empty state or showing list */}
@@ -1051,6 +954,15 @@ export default function App() {
   };
 
   useEffect(() => {
+    const initApp = async () => {
+      try {
+        await StatusBar.setOverlaysWebView({ overlay: true });
+        await StatusBar.setStyle({ style: Style.Dark });
+      } catch (e) {
+        // Ignored on web
+      }
+    };
+    initApp();
     const timer = setTimeout(() => setShowSplash(false), 2500);
     return () => clearTimeout(timer);
   }, []);
