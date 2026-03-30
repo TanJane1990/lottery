@@ -27,6 +27,8 @@ interface SavedTicket {
   lotteryId: LotteryId;
   date: string;
   numbers: { reds: number[]; blues: number[] }[];
+  multiplier?: number;
+  isDltExtra?: boolean;
 }
 
 // --- Constants ---
@@ -435,10 +437,11 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
   );
 };
 
-const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: { selectedLotteryId: LotteryId, onSelectLottery: (id: LotteryId) => void, onSave: (id: LotteryId, sets: any[]) => void, resultsData: Record<string, any[]> }) => {
+const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: { selectedLotteryId: LotteryId, onSelectLottery: (id: LotteryId) => void, onSave: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean) => void, resultsData: Record<string, any[]> }) => {
   const config = LOTTERIES.find(l => l.id === selectedLotteryId)!;
   const [sets, setSets] = useState<{reds: number[], blues: number[]}[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [multiplier, setMultiplier] = useState(1);
   
   // Manual Pick State
   const [mode, setMode] = useState<'smart' | 'manual'>('smart');
@@ -550,14 +553,6 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                    </div>
                  )}
                  
-                 {config.id === 'DLT' && (
-                    <div className="mt-4 pt-4 border-t border-gray-100 dark:border-slate-800 flex items-center justify-between">
-                       <span className="text-sm font-bold text-gray-700 dark:text-gray-200">追加投注 (3元/注)</span>
-                       <button onClick={() => setIsDltExtra(!isDltExtra)} className={`w-12 h-6 rounded-full p-1 transition-colors ${isDltExtra ? 'bg-blue-500' : 'bg-gray-200'}`}>
-                         <div className={`w-4 h-4 rounded-full bg-white dark:bg-slate-900 transition-transform ${isDltExtra ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                       </button>
-                    </div>
-                 )}
               </>
             )}
           </div>
@@ -602,6 +597,28 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
 
       {/* Action Bar */}
       <div className="bg-white dark:bg-slate-900 border-t border-gray-100 dark:border-slate-800 p-4 pb-8 flex flex-col gap-3 z-10 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        
+        {/* Global Options: Multiplier & DLT Extra */}
+        <div className="flex items-center justify-between px-1 border-b border-gray-50 dark:border-slate-800 pb-3 mb-1">
+          <div className="flex items-center gap-3">
+             <span className="text-[13px] font-bold text-gray-700 dark:text-gray-300">投倍</span>
+             <div className="flex items-center bg-gray-100 dark:bg-slate-800 rounded-lg p-0.5 border border-gray-200 dark:border-slate-700 shadow-sm">
+                <button onClick={() => setMultiplier(Math.max(1, multiplier - 1))} className="w-8 h-7 flex items-center justify-center text-gray-500 rounded bg-white shadow-sm dark:bg-slate-700 active:scale-95 transition-all">-</button>
+                <span className="w-9 text-center font-bold text-gray-800 dark:text-gray-100 text-[13px]">{multiplier}</span>
+                <button onClick={() => setMultiplier(Math.min(99, multiplier + 1))} className="w-8 h-7 flex items-center justify-center text-gray-500 rounded bg-white shadow-sm dark:bg-slate-700 active:scale-95 transition-all">+</button>
+             </div>
+          </div>
+          
+          {config.id === 'DLT' && (
+             <div className="flex items-center gap-2">
+                <span className="text-[13px] font-bold text-gray-700 dark:text-gray-300">追加投注 (3元/注)</span>
+                <button onClick={() => setIsDltExtra(!isDltExtra)} className={`w-10 h-6 rounded-full p-0.5 transition-colors border ${isDltExtra ? 'bg-blue-500 border-blue-600' : 'bg-gray-200 dark:bg-slate-700 border-gray-300 dark:border-slate-600'}`}>
+                  <div className={`w-4 h-4 ml-[1px] mt-[1px] rounded-full bg-white shadow-sm transition-transform ${isDltExtra ? 'translate-x-[14px]' : 'translate-x-0'}`}></div>
+                </button>
+             </div>
+          )}
+        </div>
+
         {mode === 'manual' && !['FC3D', 'PL3', 'QXC'].includes(config.id) && (
           <div className="flex justify-between items-center px-1">
             <div className="text-sm text-gray-600 dark:text-gray-300">
@@ -611,7 +628,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
             </div>
             <div className="text-sm">
               共 <span className="font-bold text-gray-800 dark:text-gray-100 ">{combinations}</span> 注，
-              <span className="font-bold text-[#c0392b] text-base">{totalCost}</span> <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">元</span>
+              <span className="font-bold text-[#c0392b] text-base">{totalCost * multiplier}</span> <span className="text-gray-500 dark:text-gray-400 dark:text-gray-500 text-xs">元</span>
             </div>
           </div>
         )}
@@ -627,7 +644,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
             <button
               disabled={combinations === 0}
               onClick={() => {
-                onSave(config.id, [{ reds: manualReds, blues: manualBlues }]);
+                onSave(config.id, [{ reds: manualReds, blues: manualBlues }], multiplier, isDltExtra);
                 setManualReds([]); setManualBlues([]);
               }}
               style={combinations > 0 ? { background: getGradient(config.theme, config.id) } : {}}
@@ -666,7 +683,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                 </button>
                 <button
                   onClick={() => {
-                    onSave(config.id, sets);
+                    onSave(config.id, sets, multiplier, isDltExtra);
                     setSets([]);
                   }}
                   className="w-14 bg-[#5eb47d] text-white rounded-xl flex items-center justify-center shadow-md hover:bg-[#4ea26c] active:scale-[0.98] transition-all"
@@ -741,7 +758,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
   );
 };
 
-const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
+const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean, dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
     const ticketDate = new Date(ticket.date);
@@ -793,7 +810,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] px-2 py-5 flex justify-between items-center text-center border border-white/50 dark:border-white/5">
              <div className="flex flex-col items-center flex-1 relative group cursor-pointer">
                 <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">
-                   {savedTickets.reduce((acc, t) => acc + t.numbers.length, 0)}
+                   {savedTickets.reduce((acc, t) => acc + ((t.numbers.reduce((accSets, s) => accSets + (s.reds.length > 0 ? getStrategy(LOTTERIES.find(l=>l.id===t.lotteryId)!, t.isDltExtra || false).calculateBets(s.reds.length, s.blues.length) : 0), 0) || t.numbers.length) * (t.multiplier || 1)), 0)}
                 </div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">保存注数</div>
              </div>
@@ -803,7 +820,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
              </div>
              <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
                 <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">
-                   {(savedTickets.reduce((acc, t) => acc + t.numbers.length, 0) * 2).toFixed(2)}
+                   {(savedTickets.reduce((acc, t) => acc + ((t.numbers.reduce((accSets, s) => accSets + (s.reds.length > 0 ? getStrategy(LOTTERIES.find(l=>l.id===t.lotteryId)!, t.isDltExtra || false).calculateBets(s.reds.length, s.blues.length) : 0), 0) || t.numbers.length) * (t.multiplier || 1) * (t.isDltExtra ? 3 : 2)), 0)).toFixed(2)}
                 </div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">累计投入</div>
              </div>
@@ -860,8 +877,10 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                               <span className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-transparent font-medium shadow-sm leading-none">第{matchingResult.issue}期反馈</span>
                             )}
                           </div>
-                          <div className="flex items-center text-[11px] text-gray-400 dark:text-gray-500 gap-1 tracking-wide font-mono mt-1">
-                            {new Date(ticket.date).toLocaleString()}
+                          <div className="flex items-center text-[10px] text-gray-400 dark:text-gray-500 gap-1.5 tracking-wide font-mono mt-1">
+                            <span>{new Date(ticket.date).toLocaleString()}</span>
+                            <span className="px-1.5 py-[1px] rounded bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 shadow-sm border border-gray-200 dark:border-slate-700">{ticket.multiplier || 1}倍</span>
+                            {ticket.isDltExtra && <span className="px-1.5 py-[1px] rounded bg-blue-50 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400 shadow-sm border border-blue-100 dark:border-transparent">追加</span>}
                           </div>
                         </div>
                       </div>
@@ -1129,12 +1148,14 @@ export default function App() {
     setTimeout(() => setToast({ visible: false, message: '' }), 2000);
   };
 
-  const handleSaveTicket = (lotteryId: LotteryId, numbers: {reds: number[], blues: number[]}[], dateOverride?: string) => {
+  const handleSaveTicket = (lotteryId: LotteryId, numbers: {reds: number[], blues: number[]}[], multiplier: number = 1, isDltExtra: boolean = false, dateOverride?: string) => {
     const newTicket: SavedTicket = {
       id: Math.random().toString(36).substring(7),
       lotteryId,
       date: dateOverride ? dateOverride : new Date().toISOString(),
-      numbers
+      numbers,
+      multiplier,
+      isDltExtra
     };
     setSavedTickets(prev => [newTicket, ...prev]);
     showToast('保存成功');
