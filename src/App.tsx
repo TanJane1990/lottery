@@ -801,6 +801,61 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
   );
 };
 
+// --- Prize Calculation ---
+const calcSSQPrize = (redHits: number, blueHits: number): { tier: string, amount: number } | null => {
+  if (redHits === 6 && blueHits === 1) return { tier: '一等奖', amount: 5000000 };
+  if (redHits === 6 && blueHits === 0) return { tier: '二等奖', amount: 200000 };
+  if (redHits === 5 && blueHits === 1) return { tier: '三等奖', amount: 3000 };
+  if ((redHits === 5 && blueHits === 0) || (redHits === 4 && blueHits === 1)) return { tier: '四等奖', amount: 200 };
+  if ((redHits === 4 && blueHits === 0) || (redHits === 3 && blueHits === 1)) return { tier: '五等奖', amount: 10 };
+  if (blueHits === 1 && redHits <= 2) return { tier: '六等奖', amount: 5 };
+  return null;
+};
+
+const calcDLTPrize = (redHits: number, blueHits: number, isExtra: boolean): { tier: string, amount: number } | null => {
+  const e = isExtra ? 1.8 : 1;
+  if (redHits === 5 && blueHits === 2) return { tier: '一等奖', amount: Math.round(10000000 * e) };
+  if (redHits === 5 && blueHits === 1) return { tier: '二等奖', amount: Math.round(500000 * e) };
+  if (redHits === 5 && blueHits === 0) return { tier: '三等奖', amount: 10000 };
+  if (redHits === 4 && blueHits === 2) return { tier: '四等奖', amount: 3000 };
+  if (redHits === 4 && blueHits === 1) return { tier: '五等奖', amount: 300 };
+  if (redHits === 3 && blueHits === 2) return { tier: '六等奖', amount: 200 };
+  if (redHits === 4 && blueHits === 0) return { tier: '七等奖', amount: 100 };
+  if ((redHits === 3 && blueHits === 1) || (redHits === 2 && blueHits === 2)) return { tier: '八等奖', amount: 15 };
+  if ((redHits === 3 && blueHits === 0) || (redHits === 2 && blueHits === 1) || (redHits === 1 && blueHits === 2) || (redHits === 0 && blueHits === 2)) return { tier: '九等奖', amount: 5 };
+  return null;
+};
+
+const calcQLCPrize = (redHits: number): { tier: string, amount: number } | null => {
+  if (redHits === 7) return { tier: '一等奖', amount: 5000000 };
+  if (redHits === 6) return { tier: '二等奖', amount: 50000 };
+  if (redHits === 5) return { tier: '三等奖', amount: 500 };
+  if (redHits === 4) return { tier: '四等奖', amount: 50 };
+  return null;
+};
+
+const calcPrize = (lotteryId: LotteryId, redHits: number, blueHits: number, isExtra: boolean): { tier: string, amount: number } | null => {
+  switch (lotteryId) {
+    case 'SSQ': return calcSSQPrize(redHits, blueHits);
+    case 'DLT': return calcDLTPrize(redHits, blueHits, isExtra);
+    case 'QLC': return calcQLCPrize(redHits);
+    case 'QXC': {
+      if (redHits + blueHits >= 7) return { tier: '一等奖', amount: 5000000 };
+      if (redHits + blueHits >= 6) return { tier: '二等奖', amount: 100000 };
+      if (redHits + blueHits >= 5) return { tier: '三等奖', amount: 3000 };
+      if (redHits + blueHits >= 4) return { tier: '四等奖', amount: 500 };
+      if (redHits + blueHits >= 3) return { tier: '五等奖', amount: 20 };
+      if (redHits + blueHits >= 2) return { tier: '六等奖', amount: 5 };
+      return null;
+    }
+    case 'FC3D': case 'PL3': {
+      if (redHits === 3) return { tier: '直选', amount: 1040 };
+      return null;
+    }
+    default: return null;
+  }
+};
+
 const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean, dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
@@ -819,6 +874,60 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
     return matched;
   };
 
+  const getSetPrize = (ticket: SavedTicket, set: { reds: number[], blues: number[] }, matchingResult: any) => {
+    if (!matchingResult) return null;
+    const redHits = set.reds.filter(n => matchingResult.reds.includes(n)).length;
+    const blueHits = set.blues.filter(n => matchingResult.blues.includes(n)).length;
+    return calcPrize(ticket.lotteryId, redHits, blueHits, ticket.isDltExtra || false);
+  };
+
+  // Aggregate stats
+  let totalWinCount = 0;
+  let totalPrize = 0;
+  savedTickets.forEach(ticket => {
+    const mr = getMatchingResult(ticket, resultsData[ticket.lotteryId] || []);
+    if (!mr) return;
+    ticket.numbers.forEach(set => {
+      const prize = getSetPrize(ticket, set, mr);
+      if (prize) {
+        totalWinCount++;
+        totalPrize += prize.amount * (ticket.multiplier || 1);
+      }
+    });
+  });
+
+  const handleExport = () => {
+    const data = JSON.stringify(savedTickets, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `号码本备份_${new Date().toISOString().split('T')[0]}.json`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  const handleImport = () => {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json';
+    input.onchange = (e: any) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const imported = JSON.parse(ev.target?.result as string);
+          if (Array.isArray(imported)) {
+            imported.forEach((t: any) => {
+              if (t.lotteryId && t.numbers) {
+                onSaveTicket(t.lotteryId, t.numbers, t.multiplier, t.isDltExtra, t.date);
+              }
+            });
+          }
+        } catch { /* ignore */ }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
   return (
     <div className="flex flex-col h-full bg-[#f4f5f7] dark:bg-[#0f172a] relative overflow-hidden w-full">
       {/* Absolute background color filler to prevent Android layout bounce/whitespace issues */}
@@ -858,7 +967,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">保存注数</div>
              </div>
              <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
-                <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">0</div>
+                <div className={`font-extrabold text-[22px] font-sans tracking-tight ${totalWinCount > 0 ? 'text-red-500' : 'text-gray-800 dark:text-gray-100'}`}>{totalWinCount}</div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">中奖次数</div>
              </div>
              <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
@@ -868,7 +977,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">累计投入</div>
              </div>
              <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
-                <div className="font-extrabold text-[22px] text-red-500 dark:text-red-400 font-sans tracking-tight block truncate w-full px-1">0.00</div>
+                <div className={`font-extrabold text-[22px] font-sans tracking-tight block truncate w-full px-1 ${totalPrize > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-100'}`}>{totalPrize > 0 ? totalPrize.toFixed(2) : '0.00'}</div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">累计中奖</div>
              </div>
           </div>
@@ -881,6 +990,18 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
              </div>
              <div className="h-px bg-gradient-to-l from-transparent via-gray-300 to-gray-400 dark:via-slate-600 dark:to-slate-500 w-20"></div>
           </div>
+
+          {/* Export / Import Buttons */}
+          {savedTickets.length > 0 && (
+            <div className="flex gap-2">
+              <button onClick={handleExport} className="flex-1 text-xs bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 border border-gray-200 dark:border-slate-700 active:scale-95 transition-all shadow-sm">
+                📤 导出备份
+              </button>
+              <button onClick={handleImport} className="flex-1 text-xs bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 border border-gray-200 dark:border-slate-700 active:scale-95 transition-all shadow-sm">
+                📥 导入恢复
+              </button>
+            </div>
+          )}
 
           {/* Saved Tickets content matching the empty state or showing list */}
           {savedTickets.length === 0 ? (
@@ -916,9 +1037,16 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                             <span className="font-bold text-gray-800 dark:text-gray-100 text-[15px]">{config.name}</span>
                             {!matchingResult ? (
                               <span className="text-[10px] bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 px-1.5 py-0.5 rounded border border-amber-100 dark:border-transparent font-medium shadow-sm leading-none">等待开奖</span>
-                            ) : (
-                              <span className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-transparent font-medium shadow-sm leading-none">第{matchingResult.issue}期反馈</span>
-                            )}
+                            ) : (() => {
+                              let tp = 0;
+                              ticket.numbers.forEach(s => { const p = getSetPrize(ticket, s, matchingResult); if (p) tp += p.amount; });
+                              tp *= (ticket.multiplier || 1);
+                              return tp > 0 ? (
+                                <span className="text-[10px] bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 px-1.5 py-0.5 rounded border border-red-100 dark:border-transparent font-bold shadow-sm leading-none">🎉 中奖 ¥{tp}</span>
+                              ) : (
+                                <span className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-100 dark:border-transparent font-medium shadow-sm leading-none">第{matchingResult.issue}期反馈</span>
+                              );
+                            })()}
                           </div>
                           <div className="flex items-center text-[10px] text-gray-400 dark:text-gray-500 gap-1.5 tracking-wide font-mono mt-1">
                             <span>{new Date(ticket.date).toLocaleString()}</span>
@@ -935,12 +1063,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                     
                     <div className="space-y-2 mt-2">
                       {ticket.numbers.map((set, idx) => {
-                        let localHitsR = 0; let localHitsB = 0;
-                        if (matchingResult) {
-                           set.reds.forEach(n => { if (isHit(n, 'red')) localHitsR++; });
-                           set.blues.forEach(n => { if (isHit(n, 'blue')) localHitsB++; });
-                        }
-                        const hasLocalHit = localHitsR > 0 || localHitsB > 0;
+                        const prize = matchingResult ? getSetPrize(ticket, set, matchingResult) : null;
 
                         return (
                           <div key={idx} className="flex flex-wrap items-center gap-1.5 p-2 bg-[#fafafa] dark:bg-slate-800/20 rounded-xl relative border border-white dark:border-transparent hover:border-gray-100 transition-colors">
@@ -966,8 +1089,8 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                             
                             {matchingResult && (
                                <div className="absolute right-2.5 opacity-90 pointer-events-none">
-                                  {hasLocalHit ? (
-                                    <div className="text-[10px] text-white bg-emerald-500 px-2.5 py-0.5 rounded shadow-sm font-bold tracking-widest flex items-center">中了</div>
+                                  {prize ? (
+                                    <div className="text-[10px] text-white bg-gradient-to-r from-red-500 to-rose-500 px-2.5 py-0.5 rounded shadow-sm font-bold tracking-wide flex items-center">{prize.tier} ¥{prize.amount}</div>
                                   ) : (
                                     <div className="text-[10px] text-gray-400 bg-gray-100 border border-gray-200 dark:border-slate-700 dark:bg-slate-800/80 px-2 py-0.5 rounded font-medium shadow-sm">未中</div>
                                   )}
