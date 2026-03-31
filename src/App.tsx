@@ -856,6 +856,70 @@ const calcPrize = (lotteryId: LotteryId, redHits: number, blueHits: number, isEx
   }
 };
 
+// Combination C(n, k)
+const comb = (n: number, k: number): number => {
+  if (k < 0 || k > n) return 0;
+  if (k === 0 || k === n) return 1;
+  let result = 1;
+  for (let i = 0; i < Math.min(k, n - k); i++) {
+    result = result * (n - i) / (i + 1);
+  }
+  return Math.round(result);
+};
+
+// Calculate total prize for a compound/standard set against a draw result
+// For compound bets (e.g. 8红+2蓝), enumerates all sub-combination prize tiers
+// Returns { totalAmount, bestTier, winCount }
+const calcCompoundPrize = (
+  lotteryId: LotteryId,
+  set: { reds: number[], blues: number[] },
+  drawReds: number[],
+  drawBlues: number[],
+  isExtra: boolean
+): { totalAmount: number, bestTier: string | null, winCount: number } => {
+  const config = LOTTERIES.find(l => l.id === lotteryId)!;
+  const stdR = config.red.count;  // Standard red count (e.g. 6 for SSQ)
+  const stdB = config.blue.count; // Standard blue count (e.g. 1 for SSQ)
+
+  const m = set.reds.filter(n => drawReds.includes(n)).length;   // matching reds
+  const R = set.reds.length;                                       // total reds picked
+  const b = set.blues.filter(n => drawBlues.includes(n)).length; // matching blues
+  const B = set.blues.length;                                      // total blues picked
+
+  // For FC3D/PL3 (position-based), keep simple single check
+  if (lotteryId === 'FC3D' || lotteryId === 'PL3' || lotteryId === 'QXC') {
+    const prize = calcPrize(lotteryId, m, b, isExtra);
+    return { totalAmount: prize?.amount || 0, bestTier: prize?.tier || null, winCount: prize ? 1 : 0 };
+  }
+
+  // Enumerate all possible (r, bl) combinations for compound bets
+  let totalAmount = 0;
+  let bestTier: string | null = null;
+  let bestAmount = 0;
+  let winCount = 0;
+
+  for (let r = 0; r <= Math.min(m, stdR); r++) {
+    for (let bl = 0; bl <= Math.min(b, stdB); bl++) {
+      const prize = calcPrize(lotteryId, r, bl, isExtra);
+      if (!prize) continue;
+
+      // How many sub-combinations hit exactly r matching reds + (stdR-r) non-matching reds,
+      // and bl matching blues + (stdB-bl) non-matching blues
+      const count = comb(m, r) * comb(R - m, stdR - r) * comb(b, bl) * comb(B - b, stdB - bl);
+      if (count <= 0) continue;
+
+      totalAmount += prize.amount * count;
+      winCount += count;
+      if (prize.amount > bestAmount) {
+        bestAmount = prize.amount;
+        bestTier = prize.tier;
+      }
+    }
+  }
+
+  return { totalAmount, bestTier, winCount };
+};
+
 const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean, dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
@@ -876,9 +940,9 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
 
   const getSetPrize = (ticket: SavedTicket, set: { reds: number[], blues: number[] }, matchingResult: any) => {
     if (!matchingResult) return null;
-    const redHits = set.reds.filter(n => matchingResult.reds.includes(n)).length;
-    const blueHits = set.blues.filter(n => matchingResult.blues.includes(n)).length;
-    return calcPrize(ticket.lotteryId, redHits, blueHits, ticket.isDltExtra || false);
+    const result = calcCompoundPrize(ticket.lotteryId, set, matchingResult.reds, matchingResult.blues, ticket.isDltExtra || false);
+    if (result.winCount === 0) return null;
+    return { tier: result.bestTier || '', amount: result.totalAmount, winCount: result.winCount };
   };
 
   // Aggregate stats
@@ -890,7 +954,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
     ticket.numbers.forEach(set => {
       const prize = getSetPrize(ticket, set, mr);
       if (prize) {
-        totalWinCount++;
+        totalWinCount += prize.winCount;
         totalPrize += prize.amount * (ticket.multiplier || 1);
       }
     });
@@ -1090,7 +1154,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                             {matchingResult && (
                                <div className="absolute right-2.5 opacity-90 pointer-events-none">
                                   {prize ? (
-                                    <div className="text-[10px] text-white bg-gradient-to-r from-red-500 to-rose-500 px-2.5 py-0.5 rounded shadow-sm font-bold tracking-wide flex items-center">{prize.tier} ¥{prize.amount}</div>
+                                    <div className="text-[10px] text-white bg-gradient-to-r from-red-500 to-rose-500 px-2.5 py-0.5 rounded shadow-sm font-bold tracking-wide flex items-center">{prize.winCount > 1 ? `${prize.winCount}注中 ¥${prize.amount}` : `${prize.tier} ¥${prize.amount}`}</div>
                                   ) : (
                                     <div className="text-[10px] text-gray-400 bg-gray-100 border border-gray-200 dark:border-slate-700 dark:bg-slate-800/80 px-2 py-0.5 rounded font-medium shadow-sm">未中</div>
                                   )}
