@@ -1162,7 +1162,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                             {matchingResult && (
                                <div className="absolute right-2.5 opacity-90 pointer-events-none">
                                   {prize ? (
-                                    <div className="text-[10px] text-white bg-gradient-to-r from-red-500 to-rose-500 px-2.5 py-0.5 rounded shadow-sm font-bold tracking-wide flex items-center">{prize.winCount > 1 ? `${prize.winCount}注中 ¥${prize.amount}` : `${prize.tier} ¥${prize.amount}`}</div>
+                                    <div className="text-[10px] text-white bg-gradient-to-r from-red-500 to-rose-500 px-2 py-0.5 rounded shadow-sm font-bold flex items-center">¥{prize.amount}</div>
                                   ) : (
                                     <div className="text-[10px] text-gray-400 bg-gray-100 border border-gray-200 dark:border-slate-700 dark:bg-slate-800/80 px-2 py-0.5 rounded font-medium shadow-sm">未中</div>
                                   )}
