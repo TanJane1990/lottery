@@ -1002,16 +1002,16 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
       <div className="flex-1 overflow-y-auto z-10 w-full relative pb-10">
         
         {/* Top Red Background Header - Replaced User with QR Code Donation */}
-        <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,24px)+32px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm flex flex-col items-center">
+        <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,24px)+20px)] pb-10 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm flex flex-col items-center">
           
           {/* Settings Icon - Top Right */}
-          <button onClick={() => setShowSettings(!showSettings)} className="absolute top-[calc(env(safe-area-inset-top,24px)+12px)] right-5 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white active:bg-white/25 transition-all z-20">
+          <button onClick={() => setShowSettings(!showSettings)} className="absolute top-[calc(env(safe-area-inset-top,24px)+8px)] right-5 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white active:bg-white/25 transition-all z-20">
             <Settings size={18} />
           </button>
 
           {/* Settings Dropdown */}
           {showSettings && (
-            <div className="absolute top-[calc(env(safe-area-inset-top,24px)+48px)] right-5 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-2 z-30 min-w-[160px] animate-in fade-in slide-in-from-top-2">
+            <div className="absolute top-[calc(env(safe-area-inset-top,24px)+40px)] right-5 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-2 z-30 min-w-[160px] animate-in fade-in slide-in-from-top-2">
               <button onClick={() => { handleExport(); setShowSettings(false); }} className="w-full text-left text-sm text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 active:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
                 📤 导出备份
               </button>
@@ -1021,13 +1021,13 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
             </div>
           )}
           
-          <div className="flex items-center gap-2 mb-2 text-white drop-shadow-sm">
+          <div className="flex items-center gap-2 mb-1 text-white drop-shadow-sm">
              <Sparkles size={20} className="text-yellow-300" />
              <h2 className="text-[18px] font-bold tracking-widest text-white font-sans">“锦鲤”体验站</h2>
              <Sparkles size={20} className="text-yellow-300" />
           </div>
           
-          <p className="text-[22px] text-red-100/95 font-medium mb-5 tracking-wide text-center px-6 leading-relaxed">
+          <p className="text-[22px] text-red-100/95 font-medium mb-3 tracking-wide text-center px-6 leading-relaxed">
             赞赏结善缘，随喜攒人品，<br />大奖抱回家！
           </p>
           
