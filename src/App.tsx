@@ -926,13 +926,28 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
     if (!results || results.length === 0) return null;
     const ticketDate = new Date(ticket.date);
     const ticketDateStr = `${ticketDate.getFullYear()}-${String(ticketDate.getMonth() + 1).padStart(2, '0')}-${String(ticketDate.getDate()).padStart(2, '0')}`;
+    
+    // Determine sales cutoff hour based on lottery type
+    // Fucai (SSQ, FC3D, QLC): typically 20:00
+    // Ticai (DLT, PL3, QXC): typically 21:00
+    const isTicai = ['DLT', 'PL3', 'QXC'].includes(ticket.lotteryId);
+    const cutoffHour = isTicai ? 21 : 20;
+    const isAfterCutoff = ticketDate.getHours() >= cutoffHour;
+
     let matched: any = null;
     for (let i = 0; i < results.length; i++) {
       const res = results[i];
       const drawDateStr = res.date.includes(' ') ? res.date.split(' ')[0] : res.date;
-      if (drawDateStr >= ticketDateStr) {
-        matched = res;
+      
+      if (drawDateStr > ticketDateStr) {
+        matched = res; // Save future dates incrementally down to the oldest valid one
+      } else if (drawDateStr === ticketDateStr) {
+        // Only match same-day draw if the ticket was saved before the deadline
+        if (!isAfterCutoff) {
+          matched = res;
+        }
       } else {
+        // Draw date is older than ticket date, we can stop searching backwards
         break;
       }
     }
