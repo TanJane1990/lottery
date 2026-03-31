@@ -921,6 +921,7 @@ const calcCompoundPrize = (
 };
 
 const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean, dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
+  const [showSettings, setShowSettings] = useState(false);
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
     const ticketDate = new Date(ticket.date);
@@ -1003,6 +1004,23 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
         {/* Top Red Background Header - Replaced User with QR Code Donation */}
         <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,24px)+32px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm flex flex-col items-center">
           
+          {/* Settings Icon - Top Right */}
+          <button onClick={() => setShowSettings(!showSettings)} className="absolute top-[calc(env(safe-area-inset-top,24px)+12px)] right-5 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white active:bg-white/25 transition-all z-20">
+            <Settings size={18} />
+          </button>
+
+          {/* Settings Dropdown */}
+          {showSettings && (
+            <div className="absolute top-[calc(env(safe-area-inset-top,24px)+48px)] right-5 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-2 z-30 min-w-[160px] animate-in fade-in slide-in-from-top-2">
+              <button onClick={() => { handleExport(); setShowSettings(false); }} className="w-full text-left text-sm text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 active:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
+                📤 导出备份
+              </button>
+              <button onClick={() => { handleImport(); setShowSettings(false); }} className="w-full text-left text-sm text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 active:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
+                📥 导入恢复
+              </button>
+            </div>
+          )}
+          
           <div className="flex items-center gap-2 mb-2 text-white drop-shadow-sm">
              <Sparkles size={20} className="text-yellow-300" />
              <h2 className="text-[18px] font-bold tracking-widest text-white font-sans">“锦鲤”体验站</h2>
@@ -1055,17 +1073,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
              <div className="h-px bg-gradient-to-l from-transparent via-gray-300 to-gray-400 dark:via-slate-600 dark:to-slate-500 w-20"></div>
           </div>
 
-          {/* Export / Import Buttons */}
-          {savedTickets.length > 0 && (
-            <div className="flex gap-2">
-              <button onClick={handleExport} className="flex-1 text-xs bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 border border-gray-200 dark:border-slate-700 active:scale-95 transition-all shadow-sm">
-                📤 导出备份
-              </button>
-              <button onClick={handleImport} className="flex-1 text-xs bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-300 py-2.5 rounded-xl font-bold flex items-center justify-center gap-1.5 border border-gray-200 dark:border-slate-700 active:scale-95 transition-all shadow-sm">
-                📥 导入恢复
-              </button>
-            </div>
-          )}
+
 
           {/* Saved Tickets content matching the empty state or showing list */}
           {savedTickets.length === 0 ? (
