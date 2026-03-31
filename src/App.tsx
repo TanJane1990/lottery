@@ -1127,10 +1127,24 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                           </div>
                         </div>
                       </div>
-                      
-                      <button onClick={() => onDeleteTicket(ticket.id)} className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-800/50 text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-all active:scale-90 shadow-sm border border-transparent hover:border-red-100">
-                        <Trash2 size={16} />
-                      </button>
+
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {/* Total prize for this ticket */}
+                        {matchingResult && (() => {
+                          let tp = 0;
+                          ticket.numbers.forEach(s => { const p = getSetPrize(ticket, s, matchingResult); if (p) tp += p.amount; });
+                          tp *= (ticket.multiplier || 1);
+                          return tp > 0 ? (
+                            <div className="text-right">
+                              <div className="text-red-500 font-black text-[18px] leading-tight">¥{tp >= 10000 ? (tp/10000).toFixed(tp%10000===0?0:1)+'万' : tp}</div>
+                              <div className="text-[9px] text-gray-400 font-medium">本期中奖</div>
+                            </div>
+                          ) : null;
+                        })()}
+                        <button onClick={() => onDeleteTicket(ticket.id)} className="w-8 h-8 rounded-full bg-gray-50 dark:bg-slate-800/50 text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-all active:scale-90 shadow-sm border border-transparent hover:border-red-100">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </div>
                     
                     <div className="space-y-2 mt-2">
