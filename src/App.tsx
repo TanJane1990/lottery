@@ -338,7 +338,7 @@ const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInf
       {/* Icon on the left */}
       {!hideLotteryInfo && (
         <div className="w-14 sm:w-16 flex-shrink-0 flex items-center justify-center border-r border-gray-100 dark:border-slate-800 pr-2 mr-2">
-          <img src={`./icons/${lottery.id.toLowerCase()}.png`} alt={lottery.name} className="w-10 h-10 object-contain drop-shadow-sm opacity-90" />
+          <img src={`.${lottery.icon}`} alt={lottery.name} className="w-10 h-10 object-contain drop-shadow-sm opacity-90" />
         </div>
       )}
 
@@ -528,7 +528,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
               className={`flex-shrink-0 w-12 h-12 rounded-full p-1 transition-all shadow-sm
                 ${l.id === selectedLotteryId ? 'bg-white ring-2 shadow-md scale-110 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'bg-gray-100 dark:bg-slate-800 opacity-60 grayscale hover:grayscale-0 hover:opacity-100'}`}
             >
-              <img src={`./icons/${l.id.toLowerCase()}.png`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
+              <img src={`.${l.icon}`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
             </button>
           ))}
         </div>
@@ -778,7 +778,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
               className={`flex-shrink-0 w-12 h-12 rounded-full p-1 transition-all shadow-sm
                 ${l.id === selectedLottery ? 'bg-white ring-2 shadow-md scale-110 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'bg-gray-100 dark:bg-slate-800 opacity-60 grayscale hover:grayscale-0 hover:opacity-100'}`}
             >
-              <img src={`./icons/${l.id.toLowerCase()}.png`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
+              <img src={`.${l.icon}`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
             </button>
           ))}
         </div>
