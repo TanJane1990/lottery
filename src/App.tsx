@@ -925,14 +925,22 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
     const ticketDate = new Date(ticket.date);
-    const ticketDateStr = `${ticketDate.getFullYear()}-${String(ticketDate.getMonth() + 1).padStart(2, '0')}-${String(ticketDate.getDate()).padStart(2, '0')}`;
+    
+    // Always use Beijing time (UTC+8) for ticket date extraction to avoid device/WebView timezone bugs
+    // getTime() returns UTC ms, so adding 8 hours aligns it with China Standard Time
+    const beijingTime = new Date(ticketDate.getTime() + 8 * 3600 * 1000);
+    const beijingYear = beijingTime.getUTCFullYear();
+    const beijingMonth = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
+    const beijingDay = String(beijingTime.getUTCDate()).padStart(2, '0');
+    const ticketDateStr = `${beijingYear}-${beijingMonth}-${beijingDay}`;
     
     // Determine sales cutoff hour based on lottery type
     // Fucai (SSQ, FC3D, QLC): typically 20:00
     // Ticai (DLT, PL3, QXC): typically 21:00
     const isTicai = ['DLT', 'PL3', 'QXC'].includes(ticket.lotteryId);
     const cutoffHour = isTicai ? 21 : 20;
-    const isAfterCutoff = ticketDate.getHours() >= cutoffHour;
+    const beijingHour = beijingTime.getUTCHours();
+    const isAfterCutoff = beijingHour >= cutoffHour;
 
     let matched: any = null;
     for (let i = 0; i < results.length; i++) {
