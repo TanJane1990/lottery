@@ -351,7 +351,7 @@ const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInf
       </div>
 
       {/* Bottom Balls Line / Right Balls */}
-      <div className={`flex flex-row items-center ${isSmallLottery ? 'gap-2 sm:gap-2.5 justify-start' : 'w-full justify-start gap-[5px] sm:gap-2.5'}`}>
+      <div className={`flex flex-row items-center ${isSmallLottery ? 'gap-2 sm:gap-2.5 justify-start' : `w-full justify-start ${lottery.id === 'QLC' ? 'flex-wrap gap-[7px] sm:gap-2.5' : 'gap-[5px] sm:gap-2.5'}`}`}>
          {result.reds.map((n: number, i: number) => (
            <div key={`r-${i}`} className={`relative w-[42px] sm:w-[46px] aspect-square flex-shrink min-w-[32px] bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px] ${lottery.id === 'QLC' || isSmallLottery ? 'flex-shrink-0' : ''}`}>
              <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-[18px]" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
