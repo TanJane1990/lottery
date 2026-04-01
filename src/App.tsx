@@ -541,13 +541,18 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2.5 relative z-0">
+        {/* Universal Watermark Background */}
+        <div className="fixed top-[20%] left-0 right-0 bottom-32 flex items-center justify-center pointer-events-none z-[-1]">
+          <img src={`.${config.icon}`} alt="" className="w-64 h-64 sm:w-80 sm:h-80 object-contain opacity-[0.04] dark:opacity-[0.05] grayscale" />
+        </div>
+
         {mode === 'manual' ? (
-          <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-slate-800">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-white/60 dark:border-slate-800/60 relative z-10 overflow-hidden">
             {['FC3D', 'PL3', 'QXC'].includes(config.id) ? (
               <div className="text-center text-gray-400 dark:text-gray-500 py-10">数字型彩票手选功能开发中...</div>
             ) : (
-              <>
+              <div className="relative z-10">
                  <div className="mb-4">
                     <div className="flex justify-between items-end mb-2">
                       <h3 className="font-bold text-gray-800 dark:text-gray-100 ">红球区</h3>
@@ -557,7 +562,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                       {Array.from({length: config.red.max}, (_, i) => i + 1).map(n => {
                         const isSelected = manualReds.includes(n);
                         return (
-                          <button key={`m-r-${n}`} onClick={() => handleToggleManual('red', n)} className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-sm border ${isSelected ? 'text-white border-transparent' : 'bg-[#f8f9fa] dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700'}`} style={isSelected ? { background: getGradient('red', config.id) } : {}}>
+                          <button key={`m-r-${n}`} onClick={() => handleToggleManual('red', n)} className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-sm border ${isSelected ? 'text-white border-transparent' : 'bg-white/60 dark:bg-slate-800/60 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-slate-700'}`} style={isSelected ? { background: getGradient('red', config.id) } : {}}>
                             {formatNum(n, config.red.max)}
                           </button>
                         )
@@ -575,7 +580,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                         {Array.from({length: config.blue.max}, (_, i) => i + 1).map(n => {
                           const isSelected = manualBlues.includes(n);
                           return (
-                            <button key={`m-b-${n}`} onClick={() => handleToggleManual('blue', n)} className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-sm border ${isSelected ? 'text-white border-transparent' : 'bg-[#f8f9fa] dark:bg-slate-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-slate-700'}`} style={isSelected ? { background: getGradient('blue', config.id) } : {}}>
+                            <button key={`m-b-${n}`} onClick={() => handleToggleManual('blue', n)} className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all shadow-sm border ${isSelected ? 'text-white border-transparent' : 'bg-white/60 dark:bg-slate-800/60 text-gray-600 dark:text-gray-300 border-gray-200/60 dark:border-slate-700'}`} style={isSelected ? { background: getGradient('blue', config.id) } : {}}>
                               {formatNum(n, config.blue.max)}
                             </button>
                           )
@@ -584,7 +589,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                    </div>
                  )}
                  
-              </>
+              </div>
             )}
           </div>
         ) : (
@@ -596,7 +601,6 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
               exit={{ opacity: 0 }}
               className="flex flex-col items-center justify-center h-64 text-gray-400 dark:text-gray-500"
             >
-              <Dices size={48} className="mb-4 opacity-50" />
               <p>点击下方按钮生成专属幸运号码</p>
             </motion.div>
           ) : (
@@ -616,7 +620,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                    dragMomentum={false}
                    dragDirectionLock={true}
                    style={{ willChange: 'transform' }}
-                   className="prevent-swipe bg-white dark:bg-slate-900 rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-gray-100 dark:border-slate-800 relative z-10 overflow-hidden flex items-center w-full touch-pan-y"
+                   className="prevent-swipe bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-white/60 dark:border-slate-800/60 relative z-10 overflow-hidden flex items-center w-full touch-pan-y"
                  >
                    {/* Decorative background number */}
                    <div className="absolute right-0 -mr-2 text-7xl font-black text-gray-50 dark:text-gray-800 opacity-60 select-none pointer-events-none">
