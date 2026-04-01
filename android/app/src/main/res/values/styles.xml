@@ -17,6 +17,10 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <!-- Native splash background -->
         <item name="android:background">@drawable/splash</item>
+        <item name="windowSplashScreenBackground">#0f172a</item>
+        <!-- Hide the small default Android 12 app icon that overlays the background -->
+        <item name="windowSplashScreenAnimatedIcon">@android:color/transparent</item>
     </style>
 </resources>

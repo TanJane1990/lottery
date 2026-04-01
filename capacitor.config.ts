@@ -7,6 +7,13 @@ const config: CapacitorConfig = {
   plugins: {
     StatusBar: {
       overlaysWebView: true
+    },
+    SplashScreen: {
+      launchShowDuration: 0,
+      launchAutoHide: true,
+      showSpinner: false,
+      splashFullScreen: true,
+      splashImmersive: true,
     }
   }
 };
