@@ -1041,6 +1041,19 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
               <button onClick={() => { handleImport(); setShowSettings(false); }} className="w-full text-left text-sm text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 active:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
                 📥 导入恢复
               </button>
+              <div className="w-full h-px bg-gray-100 dark:bg-slate-700 my-1"></div>
+              <div className="w-full flex items-center justify-between text-sm text-gray-700 dark:text-gray-200 px-3 py-2.5 font-medium">
+                <div className="flex items-center gap-2">
+                   {isDarkMode ? '🌙' : '☀️'} 深色模式
+                </div>
+                <button 
+                  onClick={() => setIsDarkMode?.(prev => !prev)} 
+                  className={`w-10 h-5 rounded-full transition-colors duration-300 ease-in-out relative flex items-center ${isDarkMode ? 'bg-blue-500' : 'bg-gray-300 dark:bg-slate-600'}`}
+                >
+                  <div className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out flex items-center justify-center absolute left-[2px] ${isDarkMode ? 'translate-x-5' : 'translate-x-0'}`}>
+                  </div>
+                </button>
+              </div>
             </div>
           )}
           
@@ -1085,24 +1098,6 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
                 <div className={`font-extrabold text-[22px] font-sans tracking-tight block truncate w-full px-1 ${totalPrize > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-100'}`}>{totalPrize > 0 ? totalPrize.toFixed(2) : '0.00'}</div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">累计中奖</div>
              </div>
-          </div>
-
-          {/* Settings Section */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/50 dark:border-white/5 mt-4 p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-               <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-gray-100 dark:border-slate-700 shadow-sm">
-                  <Settings size={18} className="text-gray-600 dark:text-gray-300" />
-               </div>
-               <span className="text-[16px] font-bold text-gray-800 dark:text-gray-100">深色模式</span>
-            </div>
-            <button 
-               onClick={() => setIsDarkMode?.(prev => !prev)} 
-               className={`w-12 h-6.5 rounded-full p-1 transition-colors duration-300 ease-in-out relative flex items-center ${isDarkMode ? 'bg-blue-500' : 'bg-gray-200 dark:bg-slate-700 shadow-inner'}`}
-            >
-               <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out flex items-center justify-center ${isDarkMode ? 'translate-x-[22px]' : 'translate-x-0'}`}>
-                 {isDarkMode && <Moon size={10} className="text-blue-500" />}
-               </div>
-            </button>
           </div>
 
           {/* "号码本" Number Book Section Divider */}
