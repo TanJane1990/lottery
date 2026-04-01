@@ -377,13 +377,14 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryI
   );
 };
 
-const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInfo?: boolean }> = ({ lottery, result, hideLotteryInfo }) => {
+const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInfo?: boolean, isWinner?: boolean }> = ({ lottery, result, hideLotteryInfo, isWinner }) => {
   const isSmallLottery = lottery.id === 'FC3D' || lottery.id === 'PL3';
 
   return (
     <div className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-4 sm:p-5 w-full flex ${isSmallLottery ? 'flex-row items-center justify-between flex-wrap gap-4' : 'flex-col gap-4'} shadow-[0_4px_16px_rgba(0,0,0,0.04)] relative overflow-hidden`}>
       {/* Top Header / Left Info */}
-      <div className={`flex items-center gap-3 ${isSmallLottery ? 'flex-shrink-0' : 'w-full'}`}>
+      <div className={`flex items-center justify-between ${isSmallLottery ? 'flex-shrink-0' : 'w-full'}`}>
+        <div className="flex items-center gap-3">
          {!hideLotteryInfo && (
            <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
              <img src={`.${lottery.icon}`} alt={lottery.name} className="w-full h-full object-contain drop-shadow-sm opacity-95" />
@@ -393,6 +394,26 @@ const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInf
            <span className="text-[15px] font-bold text-gray-800 dark:text-gray-100 tracking-wide leading-none">第{result.issue}期</span>
            {result.pool && !isSmallLottery && <span className="text-[13px] text-gray-500 dark:text-gray-400 leading-none">奖池累计金额：<span className="text-[#c0392b] font-bold tracking-tight ml-0.5">￥{result.pool}元</span></span>}
          </div>
+        </div>
+        {isWinner && (
+          <div className="flex-shrink-0 pl-2 pointer-events-none relative right-1 top-0">
+             <div className="flex flex-col items-center opacity-95">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-sm text-red-500 origin-center scale-[1.15] rotate-6">
+                  <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" fill="url(#gradWin)" />
+                  <path d="M7.5 11.5L10.5 14.5L16.5 8.5" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <defs>
+                    <linearGradient id="gradWin" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#F87171"/>
+                      <stop offset="1" stopColor="#DC2626"/>
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <span className="text-[9px] font-black text-red-600 dark:text-red-400 mt-1 drop-shadow-sm whitespace-nowrap bg-white/90 dark:bg-slate-800/90 rounded border border-red-100 dark:border-red-900/50 px-1 py-[1px] leading-tight tracking-wider shadow-sm">
+                  已中奖
+                </span>
+             </div>
+          </div>
+        )}
       </div>
 
       {/* Bottom Balls Line / Right Balls */}
@@ -433,7 +454,7 @@ const Toast = ({ message, visible }: { message: string, visible: boolean }) => (
 );
 
 // --- Views ---
-const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: LotteryId) => void, resultsData: Record<string, any[]> }) => {
+const HomeView = ({ onNavigate, resultsData, savedTickets }: { onNavigate: (tab: string, id?: LotteryId) => void, resultsData: Record<string, any[]>, savedTickets: SavedTicket[] }) => {
   return (
     <div className="pb-2">
       {/* Hero Section */}
@@ -472,13 +493,13 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
         
         <div className="flex justify-between items-center mb-4 relative z-10">
           <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 drop-shadow-sm">最新开奖</h2>
-          <button onClick={() => onNavigate('results')} className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 flex items-center">
+          <button onClick={() => onNavigate('results')} className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
             查看更多 <ChevronRight size={16} />
           </button>
         </div>
         <div className="space-y-3 relative z-10">
-          {resultsData['SSQ']?.[0] ? <ResultCard lottery={LOTTERIES[0]} result={resultsData['SSQ'][0]} /> : <div className="p-4 text-center text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-slate-900/80 rounded-2xl border border-white/60 dark:border-slate-800 shadow-sm animate-pulse">正在加载双色球数据...</div>}
-          {resultsData['DLT']?.[0] ? <ResultCard lottery={LOTTERIES[1]} result={resultsData['DLT'][0]} /> : <div className="p-4 text-center text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-slate-900/80 rounded-2xl border border-white/60 dark:border-slate-800 shadow-sm animate-pulse">正在加载大乐透数据...</div>}
+          {resultsData['SSQ']?.[0] ? <ResultCard lottery={LOTTERIES[0]} result={resultsData['SSQ'][0]} isWinner={checkResultHasWinner(resultsData['SSQ'][0], 'SSQ', savedTickets, resultsData)} /> : <div className="p-4 text-center text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-slate-900/80 rounded-2xl border border-white/60 dark:border-slate-800 shadow-sm animate-pulse">正在加载双色球数据...</div>}
+          {resultsData['DLT']?.[0] ? <ResultCard lottery={LOTTERIES[1]} result={resultsData['DLT'][0]} isWinner={checkResultHasWinner(resultsData['DLT'][0], 'DLT', savedTickets, resultsData)} /> : <div className="p-4 text-center text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-slate-900/80 rounded-2xl border border-white/60 dark:border-slate-800 shadow-sm animate-pulse">正在加载大乐透数据...</div>}
         </div>
       </div>
     </div>
@@ -997,54 +1018,71 @@ const calcCompoundPrize = (
   return { totalAmount, bestTier, winCount };
 };
 
-const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isDarkMode, setIsDarkMode }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean, dateOverride?: string) => void, resultsData: Record<string, any[]>, isDarkMode?: boolean, setIsDarkMode?: (val: boolean | ((prev: boolean) => boolean)) => void }) => {
-  const [showSettings, setShowSettings] = useState(false);
-  const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
-    if (!results || results.length === 0) return null;
-    const ticketDate = new Date(ticket.date);
-    
-    // Always use Beijing time (UTC+8) for ticket date extraction to avoid device/WebView timezone bugs
-    // getTime() returns UTC ms, so adding 8 hours aligns it with China Standard Time
-    const beijingTime = new Date(ticketDate.getTime() + 8 * 3600 * 1000);
-    const beijingYear = beijingTime.getUTCFullYear();
-    const beijingMonth = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
-    const beijingDay = String(beijingTime.getUTCDate()).padStart(2, '0');
-    const ticketDateStr = `${beijingYear}-${beijingMonth}-${beijingDay}`;
-    
-    // Determine sales cutoff hour based on lottery type
-    // Fucai (SSQ, FC3D, QLC): typically 20:00
-    // Ticai (DLT, PL3, QXC): typically 21:00
-    const isTicai = ['DLT', 'PL3', 'QXC'].includes(ticket.lotteryId);
-    const cutoffHour = isTicai ? 21 : 20;
-    const beijingHour = beijingTime.getUTCHours();
-    const isAfterCutoff = beijingHour >= cutoffHour;
+const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
+  if (!results || results.length === 0) return null;
+  const ticketDate = new Date(ticket.date);
+  
+  // Always use Beijing time (UTC+8) for ticket date extraction to avoid device/WebView timezone bugs
+  // getTime() returns UTC ms, so adding 8 hours aligns it with China Standard Time
+  const beijingTime = new Date(ticketDate.getTime() + 8 * 3600 * 1000);
+  const beijingYear = beijingTime.getUTCFullYear();
+  const beijingMonth = String(beijingTime.getUTCMonth() + 1).padStart(2, '0');
+  const beijingDay = String(beijingTime.getUTCDate()).padStart(2, '0');
+  const ticketDateStr = `${beijingYear}-${beijingMonth}-${beijingDay}`;
+  
+  // Determine sales cutoff hour based on lottery type
+  // Fucai (SSQ, FC3D, QLC): typically 20:00
+  // Ticai (DLT, PL3, QXC): typically 21:00
+  const isTicai = ['DLT', 'PL3', 'QXC'].includes(ticket.lotteryId);
+  const cutoffHour = isTicai ? 21 : 20;
+  const beijingHour = beijingTime.getUTCHours();
+  const isAfterCutoff = beijingHour >= cutoffHour;
 
-    let matched: any = null;
-    for (let i = 0; i < results.length; i++) {
-      const res = results[i];
-      const drawDateStr = res.date.includes(' ') ? res.date.split(' ')[0] : res.date;
-      
-      if (drawDateStr > ticketDateStr) {
-        matched = res; // Save future dates incrementally down to the oldest valid one
-      } else if (drawDateStr === ticketDateStr) {
-        // Only match same-day draw if the ticket was saved before the deadline
-        if (!isAfterCutoff) {
-          matched = res;
-        }
-      } else {
-        // Draw date is older than ticket date, we can stop searching backwards
-        break;
+  let matched: any = null;
+  for (let i = 0; i < results.length; i++) {
+    const res = results[i];
+    const drawDateStr = res.date.includes(' ') ? res.date.split(' ')[0] : res.date;
+    
+    if (drawDateStr > ticketDateStr) {
+      matched = res; // Save future dates incrementally down to the oldest valid one
+    } else if (drawDateStr === ticketDateStr) {
+      // Only match same-day draw if the ticket was saved before the deadline
+      if (!isAfterCutoff) {
+        matched = res;
+      }
+    } else {
+      // Draw date is older than ticket date, we can stop searching backwards
+      break;
+    }
+  }
+  return matched;
+};
+
+const getSetPrize = (ticket: SavedTicket, set: { reds: number[], blues: number[] }, matchingResult: any) => {
+  if (!matchingResult) return null;
+  const result = calcCompoundPrize(ticket.lotteryId, set, matchingResult.reds, matchingResult.blues, ticket.isDltExtra || false);
+  if (result.winCount === 0) return null;
+  return { tier: result.bestTier || '', amount: result.totalAmount, winCount: result.winCount };
+};
+
+const checkResultHasWinner = (result: any, lotteryId: LotteryId, savedTickets: SavedTicket[], allResultsData: Record<string, any[]>) => {
+  if (!result || !savedTickets) return false;
+  const ticketsForLottery = savedTickets.filter(t => t.lotteryId === lotteryId);
+  const results = allResultsData[lotteryId] || [];
+  for (const ticket of ticketsForLottery) {
+    const matched = getMatchingResult(ticket, results);
+    if (matched && matched.issue === result.issue) {
+      for (const set of ticket.numbers) {
+        const prize = getSetPrize(ticket, set, matched);
+        if (prize && prize.winCount > 0) return true;
       }
     }
-    return matched;
-  };
+  }
+  return false;
+};
 
-  const getSetPrize = (ticket: SavedTicket, set: { reds: number[], blues: number[] }, matchingResult: any) => {
-    if (!matchingResult) return null;
-    const result = calcCompoundPrize(ticket.lotteryId, set, matchingResult.reds, matchingResult.blues, ticket.isDltExtra || false);
-    if (result.winCount === 0) return null;
-    return { tier: result.bestTier || '', amount: result.totalAmount, winCount: result.winCount };
-  };
+const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isDarkMode, setIsDarkMode }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean, dateOverride?: string) => void, resultsData: Record<string, any[]>, isDarkMode?: boolean, setIsDarkMode?: (val: boolean | ((prev: boolean) => boolean)) => void }) => {
+  const [showSettings, setShowSettings] = useState(false);
 
   // Aggregate stats
   let totalWinCount = 0;
@@ -1585,7 +1623,7 @@ export default function App() {
                     transition={{ duration: 0.2 }}
                     className="absolute inset-0"
                   >
-                    {activeTab === 'home' && <HomeView onNavigate={(tab, id) => { if (id) setPickLotteryId(id); setActiveTab(tab); }} resultsData={resultsData} />}
+                    {activeTab === 'home' && <HomeView onNavigate={(tab, id) => { if (id) setPickLotteryId(id); setActiveTab(tab); }} resultsData={resultsData} savedTickets={savedTickets} />}
                     {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} resultsData={resultsData} />}
                     {activeTab === 'sports' && <SportsView />}
                     {activeTab === 'results' && <ResultsView resultsData={resultsData} />}
