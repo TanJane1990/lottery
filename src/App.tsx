@@ -334,28 +334,28 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryI
 
 const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInfo?: boolean }> = ({ lottery, result, hideLotteryInfo }) => {
   return (
-    <div className="bg-[#fcfdfd] dark:bg-slate-900 border border-gray-100 dark:border-slate-800 rounded-none sm:rounded-xl p-3 w-full flex flex-row items-center sm:items-stretch shadow-sm">
+    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-none sm:rounded-xl p-3 w-full flex flex-row items-center sm:items-stretch shadow-sm relative overflow-hidden">
       {/* Icon on the left */}
       {!hideLotteryInfo && (
-        <div className="w-14 sm:w-16 flex-shrink-0 flex items-center justify-center border-r border-gray-100 dark:border-slate-800 pr-2 mr-2">
+        <div className="w-14 sm:w-16 flex-shrink-0 flex items-center justify-center border-r border-gray-100/50 dark:border-slate-800/50 pr-2 mr-2">
           <img src={`.${lottery.icon}`} alt={lottery.name} className="w-10 h-10 object-contain drop-shadow-sm opacity-90" />
         </div>
       )}
 
       <div className="flex-1 flex flex-col justify-center">
-         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-xs sm:text-sm text-gray-800 dark:text-gray-100 ">
+         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-xs sm:text-sm text-gray-800 dark:text-gray-100">
            <span className="font-medium whitespace-nowrap">第{result.issue}期</span>
            {result.pool && <span className="text-gray-600 dark:text-gray-300 whitespace-nowrap">奖池累计金额：<span className="text-[#c0392b] font-bold">￥{result.pool}元</span></span>}
          </div>
-         <div className="flex flex-wrap gap-1.5 sm:gap-2">
+         <div className="flex flex-wrap gap-2 sm:gap-2.5">
             {result.reds.map((n: number, i: number) => (
-              <div key={`r-${i}`} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-                <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.red.max)}</span>
+              <div key={`r-${i}`} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center font-bold text-[13px] sm:text-sm" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+                <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.5)', marginTop: '-1px' }}>{formatNum(n, lottery.red.max)}</span>
               </div>
             ))}
             {result.blues.map((n: number, i: number) => (
-              <div key={`b-${i}`} className="w-6 h-6 sm:w-7 sm:h-7 rounded-full text-white flex items-center justify-center font-bold text-[11px] sm:text-xs" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-                <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.4)' }}>{formatNum(n, lottery.blue.max)}</span>
+              <div key={`b-${i}`} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center font-bold text-[13px] sm:text-sm" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+                <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.5)', marginTop: '-1px' }}>{formatNum(n, lottery.blue.max)}</span>
               </div>
             ))}
          </div>
@@ -405,44 +405,42 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
       </div>
 
       {/* Quick Access Grid */}
-      <div className="px-4 -mt-4 relative z-20">
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-800 p-4 grid grid-cols-2 gap-4">
+      <div className="px-4 -mt-6 relative z-20">
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-white dark:border-slate-800 p-3 grid grid-cols-2 gap-3">
           {LOTTERIES.slice(0, 4).map(lottery => (
             <div
               key={lottery.id}
               onClick={() => onNavigate('pick', lottery.id)}
-              className={`p-4 rounded-xl cursor-pointer transition-transform active:scale-95 bg-gradient-to-br ${THEME_CLASSES[lottery.theme].lightBg} border border-white`}
+              className={`p-3 rounded-xl cursor-pointer transition-transform active:scale-95 bg-gradient-to-br ${THEME_CLASSES[lottery.theme].lightBg} border border-white/60 dark:border-slate-800 flex items-center justify-between gap-1`}
             >
-              <div className="flex justify-between items-start mb-2">
-                {lottery.icon ? (
-                  <div className="w-11 h-11 flex items-center justify-center bg-white/60 dark:bg-black/20 rounded-xl overflow-hidden drop-shadow-sm">
-                    <img src={lottery.icon} alt={lottery.name} className="w-8 h-8 object-contain" />
-                  </div>
-                ) : (
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-md text-white ${THEME_CLASSES[lottery.theme].bg}`}>
-                    {lottery.org}
-                  </span>
-                )}
-                <ChevronRight size={16} className={THEME_CLASSES[lottery.theme].text} />
+              <div className="flex flex-col flex-1">
+                <h3 className="text-[15px] font-bold text-gray-800 dark:text-gray-100">{lottery.name}</h3>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">{lottery.desc}</p>
               </div>
-              <h3 className="text-lg font-bold text-gray-800 dark:text-gray-100 ">{lottery.name}</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">{lottery.desc}</p>
+              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center pointer-events-none drop-shadow-sm ml-1">
+                 <img src={`.${lottery.icon}`} alt="" className="w-full h-full object-contain" />
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Recent Results Preview */}
-      <div className="mt-8 px-4">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 ">最新开奖</h2>
+      <div className="mt-8 px-4 relative z-0">
+        <div className="fixed top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[-2] flex flex-col items-center justify-center w-full overflow-hidden opacity-[0.03] dark:opacity-[0.04]">
+           <img src="./icons/SSQ.png" alt="" className="w-64 h-64 grayscale -translate-x-12 -translate-y-12" />
+           <img src="./icons/DLT.png" alt="" className="w-64 h-64 grayscale translate-x-16 -mt-32" />
+        </div>
+        
+        <div className="flex justify-between items-center mb-4 relative z-10">
+          <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 drop-shadow-sm">最新开奖</h2>
           <button onClick={() => onNavigate('results')} className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 flex items-center">
             查看更多 <ChevronRight size={16} />
           </button>
         </div>
-        <div className="space-y-0 sm:space-y-3 divide-y divide-gray-100 dark:divide-slate-800 sm:divide-y-0 border-y sm:border-0 border-gray-200 dark:border-slate-700">
-          {resultsData['SSQ']?.[0] ? <ResultCard lottery={LOTTERIES[0]} result={resultsData['SSQ'][0]} /> : <div className="p-4 m-4 text-center text-gray-400 dark:text-gray-500 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse">正在加载双色球数据...</div>}
-          {resultsData['DLT']?.[0] ? <ResultCard lottery={LOTTERIES[1]} result={resultsData['DLT'][0]} /> : <div className="p-4 m-4 text-center text-gray-400 dark:text-gray-500 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse">正在加载大乐透数据...</div>}
+        <div className="space-y-3 relative z-10">
+          {resultsData['SSQ']?.[0] ? <ResultCard lottery={LOTTERIES[0]} result={resultsData['SSQ'][0]} /> : <div className="p-4 text-center text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-slate-900/80 rounded-2xl border border-white/60 dark:border-slate-800 shadow-sm animate-pulse">正在加载双色球数据...</div>}
+          {resultsData['DLT']?.[0] ? <ResultCard lottery={LOTTERIES[1]} result={resultsData['DLT'][0]} /> : <div className="p-4 text-center text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-slate-900/80 rounded-2xl border border-white/60 dark:border-slate-800 shadow-sm animate-pulse">正在加载大乐透数据...</div>}
         </div>
       </div>
     </div>
