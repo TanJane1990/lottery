@@ -334,30 +334,36 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryI
 
 const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInfo?: boolean }> = ({ lottery, result, hideLotteryInfo }) => {
   return (
-    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-none sm:rounded-xl p-3 w-full flex flex-row items-center sm:items-stretch shadow-sm relative overflow-hidden">
+    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-4 w-full flex flex-row items-center sm:items-stretch shadow-sm relative overflow-hidden">
       {/* Icon on the left */}
       {!hideLotteryInfo && (
-        <div className="w-14 sm:w-16 flex-shrink-0 flex items-center justify-center border-r border-gray-100/50 dark:border-slate-800/50 pr-2 mr-2">
-          <img src={`.${lottery.icon}`} alt={lottery.name} className="w-10 h-10 object-contain drop-shadow-sm opacity-90" />
+        <div className="w-16 flex-shrink-0 flex items-center justify-center border-r border-gray-100/50 dark:border-slate-800/50 pr-3 mr-3">
+          <img src={`.${lottery.icon}`} alt={lottery.name} className="w-12 h-12 object-contain drop-shadow-sm opacity-95" />
         </div>
       )}
 
       <div className="flex-1 flex flex-col justify-center">
-         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2 text-xs sm:text-sm text-gray-800 dark:text-gray-100">
+         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2.5 text-xs sm:text-sm text-gray-800 dark:text-gray-100">
            <span className="font-medium whitespace-nowrap">第{result.issue}期</span>
-           {result.pool && <span className="text-gray-600 dark:text-gray-300 whitespace-nowrap">奖池累计金额：<span className="text-[#c0392b] font-bold">￥{result.pool}元</span></span>}
+           {result.pool && <span className="text-gray-600 dark:text-gray-300 whitespace-nowrap">奖池累计金额：<span className="text-[#c0392b] font-bold tracking-tight">￥{result.pool}元</span></span>}
          </div>
-         <div className="flex flex-wrap gap-2 sm:gap-2.5">
-            {result.reds.map((n: number, i: number) => (
-              <div key={`r-${i}`} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center font-bold text-[13px] sm:text-sm" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-                <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.5)', marginTop: '-1px' }}>{formatNum(n, lottery.red.max)}</span>
+         <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap gap-2">
+              {result.reds.map((n: number, i: number) => (
+                <div key={`r-${i}`} className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-base shadow-sm hover:scale-105 transition-transform" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+                  <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.red.max)}</span>
+                </div>
+              ))}
+            </div>
+            {result.blues && result.blues.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {result.blues.map((n: number, i: number) => (
+                  <div key={`b-${i}`} className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-base shadow-sm hover:scale-105 transition-transform" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+                    <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.blue.max)}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-            {result.blues.map((n: number, i: number) => (
-              <div key={`b-${i}`} className="w-8 h-8 sm:w-9 sm:h-9 rounded-full text-white flex items-center justify-center font-bold text-[13px] sm:text-sm" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-                <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.5)', marginTop: '-1px' }}>{formatNum(n, lottery.blue.max)}</span>
-              </div>
-            ))}
+            )}
          </div>
       </div>
 
@@ -405,19 +411,19 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
       </div>
 
       {/* Quick Access Grid */}
-      <div className="px-4 -mt-6 relative z-20">
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-white dark:border-slate-800 p-3 grid grid-cols-2 gap-3">
+      <div className="px-4 -mt-5 relative z-20">
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-white dark:border-slate-800 p-3 grid grid-cols-2 gap-3.5">
           {LOTTERIES.slice(0, 4).map(lottery => (
             <div
               key={lottery.id}
               onClick={() => onNavigate('pick', lottery.id)}
-              className={`p-3 rounded-xl cursor-pointer transition-transform active:scale-95 bg-gradient-to-br ${THEME_CLASSES[lottery.theme].lightBg} border border-white/60 dark:border-slate-800 flex items-center justify-between gap-1`}
+              className={`p-3.5 sm:p-4 rounded-xl cursor-pointer transition-transform active:scale-95 bg-gradient-to-br ${THEME_CLASSES[lottery.theme].lightBg} border border-white/60 dark:border-slate-800 flex items-center justify-between gap-1 shadow-sm`}
             >
               <div className="flex flex-col flex-1">
-                <h3 className="text-[15px] font-bold text-gray-800 dark:text-gray-100">{lottery.name}</h3>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 leading-tight">{lottery.desc}</p>
+                <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100">{lottery.name}</h3>
+                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 leading-tight">{lottery.desc}</p>
               </div>
-              <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center pointer-events-none drop-shadow-sm ml-1">
+              <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center pointer-events-none drop-shadow ml-1">
                  <img src={`.${lottery.icon}`} alt="" className="w-full h-full object-contain" />
               </div>
             </div>
@@ -524,9 +530,9 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
               key={l.id}
               onClick={() => { onSelectLottery(l.id); setSets([]); }}
               className={`flex-shrink-0 w-12 h-12 rounded-full p-1 transition-all shadow-sm
-                ${l.id === selectedLotteryId ? 'bg-white ring-2 shadow-md scale-110 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'bg-gray-100 dark:bg-slate-800 opacity-60 grayscale hover:grayscale-0 hover:opacity-100'}`}
+                ${l.id === selectedLotteryId ? 'bg-white ring-2 shadow-md scale-110 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'bg-white/50 dark:bg-slate-800/50 hover:bg-white'}`}
             >
-              <img src={`.${l.icon}`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
+              <img src={`.${l.icon}`} alt={l.name} className={`w-full h-full object-contain drop-shadow-sm transition-opacity ${l.id === selectedLotteryId ? 'opacity-100' : 'opacity-85'}`} />
             </button>
           ))}
         </div>
@@ -778,9 +784,9 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
               key={l.id}
               onClick={() => handleChangeLottery(l.id)}
               className={`flex-shrink-0 w-12 h-12 rounded-full p-1 transition-all shadow-sm
-                ${l.id === selectedLottery ? 'bg-white ring-2 shadow-md scale-110 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'bg-gray-100 dark:bg-slate-800 opacity-60 grayscale hover:grayscale-0 hover:opacity-100'}`}
+                ${l.id === selectedLottery ? 'bg-white ring-2 shadow-md scale-110 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'bg-white/50 dark:bg-slate-800/50 hover:bg-white'}`}
             >
-              <img src={`.${l.icon}`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
+              <img src={`.${l.icon}`} alt={l.name} className={`w-full h-full object-contain drop-shadow-sm transition-opacity ${l.id === selectedLottery ? 'opacity-100' : 'opacity-85'}`} />
             </button>
           ))}
         </div>
@@ -1105,11 +1111,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
 
 
 
-          {/* Universal Watermark Background for Mine View */}
-          <div className="fixed top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[-2] flex flex-col items-center justify-center w-full overflow-hidden opacity-[0.03] dark:opacity-[0.04]">
-             <img src="./icons/SSQ.png" alt="" className="w-72 h-72 grayscale -translate-x-16 -translate-y-12" />
-             <img src="./icons/DLT.png" alt="" className="w-72 h-72 grayscale translate-x-20 -mt-36" />
-          </div>
+          {/* Universal Watermark Background for Mine View - REMOVED per user request */}
 
           {/* Saved Tickets content matching the empty state or showing list */}
           {savedTickets.length === 0 ? (
