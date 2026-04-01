@@ -333,26 +333,27 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryI
 };
 
 const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInfo?: boolean }> = ({ lottery, result, hideLotteryInfo }) => {
+  const isSmallLottery = lottery.id === 'FC3D' || lottery.id === 'PL3';
+
   return (
-    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-4 sm:p-5 w-full flex flex-col shadow-[0_4px_16px_rgba(0,0,0,0.04)] relative overflow-hidden gap-4">
-      {/* Top Header: Icon and Info */}
-      <div className="flex items-center gap-3 w-full">
+    <div className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-4 sm:p-5 w-full flex ${isSmallLottery ? 'flex-row items-center justify-between flex-wrap gap-4' : 'flex-col gap-4'} shadow-[0_4px_16px_rgba(0,0,0,0.04)] relative overflow-hidden`}>
+      {/* Top Header / Left Info */}
+      <div className={`flex items-center gap-3 ${isSmallLottery ? 'flex-shrink-0' : 'w-full'}`}>
          {!hideLotteryInfo && (
            <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
              <img src={`.${lottery.icon}`} alt={lottery.name} className="w-full h-full object-contain drop-shadow-sm opacity-95" />
            </div>
          )}
-         <div className="flex flex-col flex-1 gap-1.5 justify-center">
+         <div className="flex flex-col gap-1.5 justify-center">
            <span className="text-[15px] font-bold text-gray-800 dark:text-gray-100 tracking-wide leading-none">第{result.issue}期</span>
-           {result.pool && <span className="text-[13px] text-gray-500 dark:text-gray-400 leading-none">奖池累计金额：<span className="text-[#c0392b] font-bold tracking-tight ml-0.5">￥{result.pool}元</span></span>}
+           {result.pool && !isSmallLottery && <span className="text-[13px] text-gray-500 dark:text-gray-400 leading-none">奖池累计金额：<span className="text-[#c0392b] font-bold tracking-tight ml-0.5">￥{result.pool}元</span></span>}
          </div>
       </div>
 
-      {/* Bottom Balls Line */}
-      {/* Bottom Balls Line */}
-      <div className={`flex flex-row items-center w-full ${lottery.id === 'QLC' ? 'flex-wrap gap-2 sm:gap-2.5' : 'justify-start gap-[5px] sm:gap-2.5'}`}>
+      {/* Bottom Balls Line / Right Balls */}
+      <div className={`flex flex-row items-center ${isSmallLottery ? 'gap-2 sm:gap-2.5 justify-start' : 'w-full justify-start gap-[5px] sm:gap-2.5'}`}>
          {result.reds.map((n: number, i: number) => (
-           <div key={`r-${i}`} className={`relative w-[42px] sm:w-[46px] aspect-square flex-shrink min-w-[32px] bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px] ${lottery.id === 'QLC' ? 'flex-shrink-0' : ''}`}>
+           <div key={`r-${i}`} className={`relative w-[42px] sm:w-[46px] aspect-square flex-shrink min-w-[32px] bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px] ${lottery.id === 'QLC' || isSmallLottery ? 'flex-shrink-0' : ''}`}>
              <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-[18px]" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
                <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.red.max)}</span>
              </div>
