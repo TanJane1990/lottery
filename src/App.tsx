@@ -513,9 +513,9 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
+    <div className="flex flex-col h-full bg-transparent dark:bg-transparent relative">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-3 px-4 shadow-sm z-10 sticky top-0">
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-3 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
         {/* Lottery Tabs */}
         <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2 px-2 items-center justify-start">
@@ -769,8 +769,8 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
-      <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-3 px-4 shadow-sm z-10 sticky top-0">
+    <div className="flex flex-col h-full bg-transparent dark:bg-transparent relative z-0">
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-3 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">历史开奖</h1>
         <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2 px-2 items-center justify-start">
           {LOTTERIES.map(l => (
@@ -785,9 +785,12 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
           ))}
         </div>
       </div>
-      <div onScroll={handleScroll} className="flex-1 overflow-y-auto bg-[#f5f5f5] dark:bg-slate-950 p-0 sm:p-4 space-y-0 sm:space-y-3">
+      <div onScroll={handleScroll} className="flex-1 overflow-y-auto bg-transparent dark:bg-transparent p-4 space-y-3 relative z-0">
+        <div className="fixed top-[45%] left-0 right-0 flex items-center justify-center pointer-events-none z-[-1]">
+           <img src={`.${config.icon}`} alt="" className="w-72 h-72 sm:w-96 sm:h-96 object-contain opacity-[0.03] dark:opacity-[0.04] grayscale" />
+        </div>
         {results.length === 0 ? (
-           <div className="p-8 m-4 text-center text-gray-400 dark:text-gray-500 bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm animate-pulse">正在加载历史数据...</div>
+           <div className="p-8 text-center text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/60 dark:border-slate-800/60 shadow-sm animate-pulse">正在加载历史数据...</div>
         ) : (
           <div className="flex flex-col border-y sm:border-0 border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800 sm:divide-y-0">
             {visibleResults.map((res, idx) => (
@@ -1021,9 +1024,9 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
     input.click();
   };
   return (
-    <div className="flex flex-col h-full bg-[#f4f5f7] dark:bg-[#0f172a] relative overflow-hidden w-full">
+    <div className="flex flex-col h-full bg-transparent dark:bg-transparent relative overflow-hidden w-full">
       {/* Absolute background color filler to prevent Android layout bounce/whitespace issues */}
-      <div className="absolute inset-0 bg-[#f4f5f7] dark:bg-[#0f172a] z-[-1]"></div>
+      <div className="absolute inset-0 bg-transparent dark:bg-transparent z-[-1]"></div>
       
       {/* Scrollable Main content */}
       <div className="flex-1 overflow-y-auto z-10 w-full relative pb-10">
@@ -1102,9 +1105,15 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
 
 
 
+          {/* Universal Watermark Background for Mine View */}
+          <div className="fixed top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[-2] flex flex-col items-center justify-center w-full overflow-hidden opacity-[0.03] dark:opacity-[0.04]">
+             <img src="./icons/SSQ.png" alt="" className="w-72 h-72 grayscale -translate-x-16 -translate-y-12" />
+             <img src="./icons/DLT.png" alt="" className="w-72 h-72 grayscale translate-x-20 -mt-36" />
+          </div>
+
           {/* Saved Tickets content matching the empty state or showing list */}
           {savedTickets.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 rounded-2xl p-12 text-center shadow-[0_2px_8px_rgba(0,0,0,0.02)] mb-8">
+            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-12 text-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-white/60 dark:border-slate-800/60 mb-8 relative z-10">
               <History size={64} strokeWidth={1} className="mx-auto text-[#e2e8f0] dark:text-slate-700 mb-5" />
               <p className="text-gray-600 dark:text-gray-300 text-[15px] font-bold mb-1.5">暂无保存的号码</p>
               <p className="text-[#94a3b8] dark:text-gray-500 text-xs font-medium">去选号页面生成并保存吧</p>
@@ -1123,7 +1132,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
                 };
 
                 return (
-                  <div key={ticket.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow-[0_2px_8px_rgba(0,0,0,0.03)] relative overflow-hidden">
+                  <div key={ticket.id} className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-4 shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative overflow-hidden z-10">
                     <div className="flex justify-between items-center mb-3 pb-3 border-b border-gray-50 dark:border-slate-800/80">
                       <div className="flex items-center gap-3">
                         {config.icon && (
@@ -1454,7 +1463,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-900 dark:bg-black flex justify-center overflow-hidden">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 min-h-screen shadow-2xl relative flex flex-col overflow-hidden">
+      <div className="w-full max-w-md bg-[#f0f2f5] dark:bg-slate-950 min-h-screen shadow-2xl relative flex flex-col overflow-hidden z-0">
         <AnimatePresence mode="wait">
           {showSplash ? (
             <SplashScreen key="splash" />
