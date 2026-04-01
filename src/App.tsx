@@ -334,49 +334,37 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryI
 
 const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInfo?: boolean }> = ({ lottery, result, hideLotteryInfo }) => {
   return (
-    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-4 w-full flex flex-row items-center sm:items-stretch shadow-sm relative overflow-hidden">
-      {/* Icon on the left */}
-      {!hideLotteryInfo && (
-        <div className="w-16 flex-shrink-0 flex items-center justify-center border-r border-gray-100/50 dark:border-slate-800/50 pr-3 mr-3">
-          <img src={`.${lottery.icon}`} alt={lottery.name} className="w-12 h-12 object-contain drop-shadow-sm opacity-95" />
-        </div>
-      )}
-
-      <div className="flex-1 flex flex-col justify-center">
-         <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mb-2.5 text-xs sm:text-sm text-gray-800 dark:text-gray-100">
-           <span className="font-medium whitespace-nowrap">第{result.issue}期</span>
-           {result.pool && <span className="text-gray-600 dark:text-gray-300 whitespace-nowrap">奖池累计金额：<span className="text-[#c0392b] font-bold tracking-tight">￥{result.pool}元</span></span>}
-         </div>
-         <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap gap-2">
-              {result.reds.map((n: number, i: number) => (
-                <div key={`r-${i}`} className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-base shadow-sm hover:scale-105 transition-transform" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-                  <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.red.max)}</span>
-                </div>
-              ))}
-            </div>
-            {result.blues && result.blues.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {result.blues.map((n: number, i: number) => (
-                  <div key={`b-${i}`} className="w-[38px] h-[38px] sm:w-[42px] sm:h-[42px] rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-base shadow-sm hover:scale-105 transition-transform" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: 'contain', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-                    <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.blue.max)}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+    <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-4 sm:p-5 w-full flex flex-col shadow-[0_4px_16px_rgba(0,0,0,0.04)] relative overflow-hidden gap-4">
+      {/* Top Header: Icon and Info */}
+      <div className="flex items-center gap-3 w-full">
+         {!hideLotteryInfo && (
+           <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center">
+             <img src={`.${lottery.icon}`} alt={lottery.name} className="w-full h-full object-contain drop-shadow-sm opacity-95" />
+           </div>
+         )}
+         <div className="flex flex-col flex-1 gap-1.5 justify-center">
+           <span className="text-[15px] font-bold text-gray-800 dark:text-gray-100 tracking-wide leading-none">第{result.issue}期</span>
+           {result.pool && <span className="text-[13px] text-gray-500 dark:text-gray-400 leading-none">奖池累计金额：<span className="text-[#c0392b] font-bold tracking-tight ml-0.5">￥{result.pool}元</span></span>}
          </div>
       </div>
 
-      {lottery.schedule && (
-        <div className="hidden sm:flex w-36 flex-shrink-0 flex-col justify-center text-xs text-gray-600 dark:text-gray-300 border-l border-gray-100 dark:border-slate-800 pl-4 py-1">
-          <div className="mb-2 whitespace-nowrap">{lottery.schedule}</div>
-          <div className="flex gap-2 text-[#6287ba]">
-             <span className="cursor-pointer hover:underline">详情</span>
-             <span className="cursor-pointer hover:underline">往期</span>
-             <span className="cursor-pointer hover:underline">往期视频</span>
-          </div>
-        </div>
-      )}
+      {/* Bottom Balls Line */}
+      <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full">
+         {result.reds.map((n: number, i: number) => (
+           <div key={`r-${i}`} className="relative w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] flex-shrink-0 bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px]">
+             <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[16px] sm:text-[18px]" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+               <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.red.max)}</span>
+             </div>
+           </div>
+         ))}
+         {result.blues && result.blues.map((n: number, i: number) => (
+           <div key={`b-${i}`} className="relative w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] flex-shrink-0 bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px]">
+             <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[16px] sm:text-[18px]" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+               <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.blue.max)}</span>
+             </div>
+           </div>
+         ))}
+      </div>
     </div>
   );
 };
@@ -798,12 +786,12 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
         {results.length === 0 ? (
            <div className="p-8 text-center text-gray-400 dark:text-gray-500 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl border border-white/60 dark:border-slate-800/60 shadow-sm animate-pulse">正在加载历史数据...</div>
         ) : (
-          <div className="flex flex-col border-y sm:border-0 border-gray-200 dark:border-slate-700 divide-y divide-gray-100 dark:divide-slate-800 sm:divide-y-0">
+          <div className="flex flex-col gap-3 pb-8">
             {visibleResults.map((res, idx) => (
               <ResultCard key={res.issue || idx} lottery={config} result={res} hideLotteryInfo={true} />
             ))}
             {hasMore && (
-              <div className="p-4 text-center text-sm text-gray-500">
+              <div className="p-4 text-center text-sm text-gray-500 bg-white/50 dark:bg-slate-900/50 backdrop-blur-md rounded-2xl border border-white/40 dark:border-slate-800/40">
                 正在加载更多...
               </div>
             )}
