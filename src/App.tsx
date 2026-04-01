@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble, ScanLine, MessageSquare, Settings, Headphones, Wallet, Ticket, Gift, CreditCard, Clock, CheckCircle, Bell, Grid, FileText, Smartphone, Crown, ShieldCheck, LineChart, BookOpen, Calculator, MapPin, XCircle, Star, X } from 'lucide-react';
+import { Home, Dices, Trophy, User, ChevronRight, RefreshCw, Save, Trash2, History, Sparkles, CheckCircle2, Dribbble, ScanLine, MessageSquare, Settings, Headphones, Wallet, Ticket, Gift, CreditCard, Clock, CheckCircle, Bell, Grid, FileText, Smartphone, Crown, ShieldCheck, LineChart, BookOpen, Calculator, MapPin, XCircle, Star, X, Moon } from 'lucide-react';
 import { CapacitorHttp } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from './SplashScreen';
@@ -920,7 +920,7 @@ const calcCompoundPrize = (
   return { totalAmount, bestTier, winCount };
 };
 
-const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean, dateOverride?: string) => void, resultsData: Record<string, any[]> }) => {
+const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isDarkMode, setIsDarkMode }: { savedTickets: SavedTicket[], onDeleteTicket: (id: string) => void, onSaveTicket: (id: LotteryId, sets: any[], multiplier?: number, isDltExtra?: boolean, dateOverride?: string) => void, resultsData: Record<string, any[]>, isDarkMode?: boolean, setIsDarkMode?: (val: boolean | ((prev: boolean) => boolean)) => void }) => {
   const [showSettings, setShowSettings] = useState(false);
   const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
     if (!results || results.length === 0) return null;
@@ -1087,8 +1087,26 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData }: {
              </div>
           </div>
 
+          {/* Settings Section */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-white/50 dark:border-white/5 mt-4 p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+               <div className="w-9 h-9 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-gray-100 dark:border-slate-700 shadow-sm">
+                  <Settings size={18} className="text-gray-600 dark:text-gray-300" />
+               </div>
+               <span className="text-[16px] font-bold text-gray-800 dark:text-gray-100">深色模式</span>
+            </div>
+            <button 
+               onClick={() => setIsDarkMode?.(prev => !prev)} 
+               className={`w-12 h-6.5 rounded-full p-1 transition-colors duration-300 ease-in-out relative flex items-center ${isDarkMode ? 'bg-blue-500' : 'bg-gray-200 dark:bg-slate-700 shadow-inner'}`}
+            >
+               <div className={`w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-300 ease-in-out flex items-center justify-center ${isDarkMode ? 'translate-x-[22px]' : 'translate-x-0'}`}>
+                 {isDarkMode && <Moon size={10} className="text-blue-500" />}
+               </div>
+            </button>
+          </div>
+
           {/* "号码本" Number Book Section Divider */}
-          <div className="flex items-center justify-center gap-4 pt-5 pb-2">
+          <div className="flex items-center justify-center gap-4 pt-6 pb-2">
              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-gray-400 dark:via-slate-600 dark:to-slate-500 w-20"></div>
              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[15px] font-bold tracking-widest">
                 <History size={16} strokeWidth={2.5} /> 号码本
@@ -1237,6 +1255,22 @@ export default function App() {
     }
   });
   const [toast, setToast] = useState({ visible: false, message: '' });
+  
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    if (saved) return saved === 'dark';
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   // Swipe gesture state
   const [touchStart, setTouchStart] = useState<{ x: number, y: number, time: number } | null>(null);
@@ -1483,7 +1517,7 @@ export default function App() {
                     {activeTab === 'pick' && <PickView selectedLotteryId={pickLotteryId} onSelectLottery={setPickLotteryId} onSave={handleSaveTicket} resultsData={resultsData} />}
                     {activeTab === 'sports' && <SportsView />}
                     {activeTab === 'results' && <ResultsView resultsData={resultsData} />}
-                    {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} onSaveTicket={handleSaveTicket} resultsData={resultsData} />}
+                    {activeTab === 'mine' && <MineView savedTickets={savedTickets} onDeleteTicket={handleDeleteTicket} onSaveTicket={handleSaveTicket} resultsData={resultsData} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} />}
                   </motion.div>
                 </AnimatePresence>
               </div>
