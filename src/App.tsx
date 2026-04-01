@@ -566,19 +566,19 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   return (
     <div className="flex flex-col h-full bg-transparent dark:bg-transparent relative">
       {/* Header */}
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-3 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
-        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(env(safe-area-inset-top,44px)+6px)] pb-2 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
+        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-2 mt-1">智能机选</h1>
         {/* Lottery Tabs */}
-        <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2 px-2 pt-1 items-start justify-start">
+        <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-1 px-2 pt-0 items-start justify-start">
           {LOTTERIES.map(l => {
             const isSelected = l.id === selectedLotteryId;
             return (
               <button
                 key={l.id}
                 onClick={() => { onSelectLottery(l.id); setSets([]); }}
-                className={`flex flex-col items-center gap-1.5 transition-all outline-none flex-shrink-0 ${isSelected ? 'scale-[1.05] origin-bottom opacity-100' : 'opacity-70 hover:opacity-100 scale-100'}`}
+                className={`flex flex-col items-center gap-1 transition-all outline-none flex-shrink-0 ${isSelected ? 'scale-[1.05] origin-bottom opacity-100' : 'opacity-70 hover:opacity-100 scale-100'}`}
               >
-                <div className={`w-[48px] h-[48px] bg-white dark:bg-slate-800 rounded-full p-1.5 transition-all flex items-center justify-center ${isSelected ? 'shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-2 ring-offset-2 dark:ring-offset-slate-900 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'border border-gray-100 dark:border-slate-800 shadow-sm'}`}>
+                <div className={`w-[42px] h-[42px] bg-white dark:bg-slate-800 rounded-full p-1.5 transition-all flex items-center justify-center ${isSelected ? 'shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-2 ring-offset-2 dark:ring-offset-slate-900 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'border border-gray-100 dark:border-slate-800 shadow-sm'}`}>
                   <img src={`.${l.icon}`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
                 </div>
                 <span className={`text-[11px] whitespace-nowrap font-bold transition-all ${isSelected ? (l.theme === 'red' ? 'text-red-500' : 'text-blue-500') : 'text-gray-500 dark:text-gray-400'}`}>
@@ -590,14 +590,14 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
         </div>
         
         {/* Mode Selector */}
-        <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1 mx-2 mb-2 mt-2">
-          <button onClick={() => setMode('smart')} className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>智能机选</button>
-          <button onClick={() => setMode('manual')} className={`flex-1 py-1.5 text-sm font-bold rounded-md transition-all ${mode === 'manual' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>手选 / 复式</button>
+        <div className="flex bg-gray-100 dark:bg-slate-800 rounded-lg p-1 mx-2 mb-0 mt-1">
+          <button onClick={() => setMode('smart')} className={`flex-1 py-1 text-sm font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>智能机选</button>
+          <button onClick={() => setMode('manual')} className={`flex-1 py-1 text-sm font-bold rounded-md transition-all ${mode === 'manual' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>手选 / 复式</button>
         </div>
       </div>
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2.5 relative z-0">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 relative z-0">
         {/* Universal Watermark Background */}
         <div className="fixed top-[20%] left-0 right-0 bottom-32 flex items-center justify-center pointer-events-none z-[-1]">
           <img src={`.${config.icon}`} alt="" className="w-64 h-64 sm:w-80 sm:h-80 object-contain opacity-[0.04] dark:opacity-[0.05] grayscale" />
@@ -676,7 +676,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                    dragMomentum={false}
                    dragDirectionLock={true}
                    style={{ willChange: 'transform' }}
-                   className="prevent-swipe bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl py-3 px-3 sm:p-4 shadow-sm border border-white/60 dark:border-slate-800/60 relative z-10 overflow-hidden flex items-center w-full touch-pan-y"
+                   className="prevent-swipe bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl py-2 px-3 sm:py-3 sm:px-4 shadow-sm border border-white/60 dark:border-slate-800/60 relative z-10 overflow-hidden flex items-center w-full touch-pan-y"
                  >
                    {/* Decorative background number */}
                    <div className="absolute right-0 -mr-2 text-7xl font-black text-gray-50 dark:text-gray-800 opacity-60 select-none pointer-events-none">
@@ -833,18 +833,18 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 
   return (
     <div className="flex flex-col h-full bg-transparent dark:bg-transparent relative z-0">
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(env(safe-area-inset-top,44px)+12px)] pb-3 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
-        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">历史开奖</h1>
-        <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-2 px-2 pt-1 items-start justify-start">
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(env(safe-area-inset-top,44px)+6px)] pb-2 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
+        <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-2 mt-1">历史开奖</h1>
+        <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-1 px-2 pt-0 items-start justify-start">
           {LOTTERIES.map(l => {
             const isSelected = l.id === selectedLottery;
             return (
               <button
                 key={l.id}
                 onClick={() => handleChangeLottery(l.id)}
-                className={`flex flex-col items-center gap-1.5 transition-all outline-none flex-shrink-0 ${isSelected ? 'scale-[1.05] origin-bottom opacity-100' : 'opacity-70 hover:opacity-100 scale-100'}`}
+                className={`flex flex-col items-center gap-1 transition-all outline-none flex-shrink-0 ${isSelected ? 'scale-[1.05] origin-bottom opacity-100' : 'opacity-70 hover:opacity-100 scale-100'}`}
               >
-                <div className={`w-[48px] h-[48px] bg-white dark:bg-slate-800 rounded-full p-1.5 transition-all flex items-center justify-center ${isSelected ? 'shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-2 ring-offset-2 dark:ring-offset-slate-900 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'border border-gray-100 dark:border-slate-800 shadow-sm'}`}>
+                <div className={`w-[42px] h-[42px] bg-white dark:bg-slate-800 rounded-full p-1.5 transition-all flex items-center justify-center ${isSelected ? 'shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-2 ring-offset-2 dark:ring-offset-slate-900 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'border border-gray-100 dark:border-slate-800 shadow-sm'}`}>
                   <img src={`.${l.icon}`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
                 </div>
                 <span className={`text-[11px] whitespace-nowrap font-bold transition-all ${isSelected ? (l.theme === 'red' ? 'text-red-500' : 'text-blue-500') : 'text-gray-500 dark:text-gray-400'}`}>
