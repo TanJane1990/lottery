@@ -546,17 +546,24 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
       <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+36px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">智能机选</h1>
         {/* Lottery Tabs */}
-        <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
-          {LOTTERIES.map(l => (
-            <button
-              key={l.id}
-              onClick={() => { onSelectLottery(l.id); setSets([]); }}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
-                ${l.id === selectedLotteryId ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300'}`}
-            >
-              {l.name}
-            </button>
-          ))}
+        <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-3 px-2 pt-2">
+          {LOTTERIES.map(l => {
+            const isSelected = l.id === selectedLotteryId;
+            return (
+              <button
+                key={l.id}
+                onClick={() => { onSelectLottery(l.id); setSets([]); }}
+                className={`flex flex-col items-center gap-1.5 transition-all outline-none flex-shrink-0 ${isSelected ? 'scale-[1.05] origin-bottom' : 'opacity-70 hover:opacity-100 scale-100'}`}
+              >
+                <div className={`w-[48px] h-[48px] bg-white dark:bg-slate-800 rounded-full p-1.5 transition-all flex items-center justify-center ${isSelected ? 'shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-2 ring-offset-2 dark:ring-offset-slate-900 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'border border-gray-100 dark:border-slate-800 shadow-sm'}`}>
+                  <img src={`.${l.icon}`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
+                </div>
+                <span className={`text-[11px] sm:text-xs whitespace-nowrap font-bold transition-all ${isSelected ? (l.theme === 'red' ? 'text-red-500' : 'text-blue-500') : 'text-gray-500 dark:text-gray-400'}`}>
+                   {l.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Mode Selector */}
@@ -764,17 +771,24 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
     <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 ">
       <div className="bg-white dark:bg-slate-900 pt-[calc(env(safe-area-inset-top,55px)+36px)] pb-4 px-4 shadow-sm z-10 sticky top-0">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-4">历史开奖</h1>
-        <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-2">
-          {LOTTERIES.map(l => (
-            <button
-              key={l.id}
-              onClick={() => handleChangeLottery(l.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all
-                ${l.id === selectedLottery ? THEME_CLASSES[l.theme].pillActive : 'bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300'}`}
-            >
-              {l.name}
-            </button>
-          ))}
+        <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-3 px-2 pt-2">
+          {LOTTERIES.map(l => {
+            const isSelected = l.id === selectedLottery;
+            return (
+              <button
+                key={l.id}
+                onClick={() => handleChangeLottery(l.id)}
+                className={`flex flex-col items-center gap-1.5 transition-all outline-none flex-shrink-0 ${isSelected ? 'scale-[1.05] origin-bottom' : 'opacity-70 hover:opacity-100 scale-100'}`}
+              >
+                <div className={`w-[48px] h-[48px] bg-white dark:bg-slate-800 rounded-full p-1.5 transition-all flex items-center justify-center ${isSelected ? 'shadow-[0_4px_12px_rgba(0,0,0,0.1)] ring-2 ring-offset-2 dark:ring-offset-slate-900 ' + (l.theme === 'red' ? 'ring-red-400' : 'ring-blue-400') : 'border border-gray-100 dark:border-slate-800 shadow-sm'}`}>
+                  <img src={`.${l.icon}`} alt={l.name} className="w-full h-full object-contain drop-shadow-sm" />
+                </div>
+                <span className={`text-[11px] sm:text-xs whitespace-nowrap font-bold transition-all ${isSelected ? (l.theme === 'red' ? 'text-red-500' : 'text-blue-500') : 'text-gray-500 dark:text-gray-400'}`}>
+                   {l.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
       <div className="flex-1 overflow-y-auto bg-[#f5f5f5] dark:bg-slate-950 p-0 sm:p-4 space-y-0 sm:space-y-3">
