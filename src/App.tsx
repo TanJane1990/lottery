@@ -407,11 +407,11 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
             <div
               key={lottery.id}
               onClick={() => onNavigate('pick', lottery.id)}
-              className={`p-3.5 sm:p-4 rounded-xl cursor-pointer transition-transform active:scale-95 bg-gradient-to-br ${THEME_CLASSES[lottery.theme].lightBg} border border-white/60 dark:border-slate-800 flex items-center justify-between gap-1 shadow-sm`}
+              className="p-3.5 sm:p-4 rounded-xl cursor-pointer transition-transform active:scale-95 bg-gray-50/80 hover:bg-white dark:bg-slate-800/80 dark:hover:bg-slate-700/80 border border-white/60 dark:border-slate-700/60 flex items-center justify-between gap-1 shadow-sm"
             >
-              <div className="flex flex-col flex-1">
+              <div className="flex flex-col flex-1 gap-0.5">
                 <h3 className="text-base sm:text-lg font-bold text-gray-800 dark:text-gray-100">{lottery.name}</h3>
-                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 mt-1 leading-tight">{lottery.desc}</p>
+                <p className="text-[11px] sm:text-xs text-gray-500 dark:text-gray-400 leading-tight">{lottery.desc}</p>
               </div>
               <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center pointer-events-none drop-shadow ml-1">
                  <img src={`.${lottery.icon}`} alt="" className="w-full h-full object-contain" />
