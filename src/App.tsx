@@ -421,10 +421,7 @@ const HomeView = ({ onNavigate, resultsData }: { onNavigate: (tab: string, id?: 
 
       {/* Recent Results Preview */}
       <div className="mt-8 px-4 relative z-0">
-        <div className="fixed top-[60%] left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[-2] flex flex-col items-center justify-center w-full overflow-hidden opacity-[0.03] dark:opacity-[0.04]">
-           <img src="./icons/SSQ.png" alt="" className="w-64 h-64 grayscale -translate-x-12 -translate-y-12" />
-           <img src="./icons/DLT.png" alt="" className="w-64 h-64 grayscale translate-x-16 -mt-32" />
-        </div>
+        {/* Watermark removed per request */}
         
         <div className="flex justify-between items-center mb-4 relative z-10">
           <h2 className="text-lg font-bold text-gray-800 dark:text-gray-100 drop-shadow-sm">最新开奖</h2>
