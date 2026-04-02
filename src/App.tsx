@@ -1139,8 +1139,8 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
       {/* Scrollable Main content */}
       <div className="flex-1 overflow-y-auto z-10 w-full relative pb-10">
         
-        {/* Top Red Background Header - Replaced User with QR Code Donation */}
-        <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,24px)+20px)] pb-10 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm flex flex-col items-center">
+        {/* Top Red Background Header - QR on left, text on right */}
+        <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,24px)+16px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm">
           
           {/* Settings Icon - Top Right */}
           <button onClick={() => setShowSettings(!showSettings)} className="absolute top-[calc(env(safe-area-inset-top,24px)+8px)] right-5 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white active:bg-white/25 transition-all z-20">
@@ -1171,25 +1171,28 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
               </div>
             </div>
           )}
-          
-          <div className="flex items-center gap-2 mb-1 text-white drop-shadow-sm">
-             <Sparkles size={20} className="text-yellow-300" />
-             <h2 className="text-[18px] font-bold tracking-widest text-white font-sans">“锦鲤”体验站</h2>
-             <Sparkles size={20} className="text-yellow-300" />
-          </div>
-          
-          <p className="text-[22px] text-red-100/95 font-medium mb-3 tracking-wide text-center px-6 leading-relaxed">
-            赞赏结善缘，随喜攒人品，<br />大奖抱回家！
-          </p>
-          
-          <div className="w-[130px] h-[130px] bg-white rounded-2xl overflow-hidden p-2 shadow-[0_8px_24px_rgba(200,20,20,0.6)] ring-4 ring-white/30 border-2 border-transparent">
-            <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-xl border border-gray-100 dark:border-slate-700" />
+
+          {/* Header Content: QR left, Text right */}
+          <div className="flex items-center gap-4 mt-1">
+            <div className="w-[110px] h-[110px] bg-white rounded-2xl overflow-hidden p-1.5 shadow-[0_6px_20px_rgba(0,0,0,0.25)] ring-2 ring-white/20 flex-shrink-0">
+              <img src="./icons/qr1.jpg" alt="Donation QR Code" className="w-full h-full object-contain rounded-xl" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Sparkles size={16} className="text-yellow-300 flex-shrink-0" />
+                <h2 className="text-[16px] font-bold tracking-widest text-white font-sans whitespace-nowrap">✨ “锦鲤”体验站 ✨</h2>
+                <Sparkles size={16} className="text-yellow-300 flex-shrink-0" />
+              </div>
+              <p className="text-[17px] text-red-100/95 font-semibold tracking-wide leading-relaxed">
+                赞赏结善缘，随喜攒人品，<br />大奖抱回家！
+              </p>
+            </div>
           </div>
           
         </div>
 
         {/* Content Wrapper */}
-        <div className="-mt-8 px-4 relative z-10 space-y-4">
+        <div className="-mt-8 px-4 relative z-10">
           
           {/* Stats Box */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-[0_4px_12px_rgba(0,0,0,0.05)] px-2 py-5 flex justify-between items-center text-center border border-white/50 dark:border-white/5">
@@ -1197,26 +1200,26 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
                 <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">
                    {savedTickets.reduce((acc, t) => acc + ((t.numbers.reduce((accSets, s) => accSets + (s.reds.length > 0 ? getStrategy(LOTTERIES.find(l=>l.id===t.lotteryId)!, t.isDltExtra || false).calculateBets(s.reds.length, s.blues.length) : 0), 0) || t.numbers.length) * (t.multiplier || 1)), 0)}
                 </div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">保存注数</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium ">保存注数</div>
              </div>
              <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
                 <div className={`font-extrabold text-[22px] font-sans tracking-tight ${totalWinCount > 0 ? 'text-red-500' : 'text-gray-800 dark:text-gray-100'}`}>{totalWinCount}</div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">中奖次数</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium ">中奖次数</div>
              </div>
              <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
                 <div className="font-extrabold text-[22px] text-gray-800 dark:text-gray-100 font-sans tracking-tight">
                    {(savedTickets.reduce((acc, t) => acc + ((t.numbers.reduce((accSets, s) => accSets + (s.reds.length > 0 ? getStrategy(LOTTERIES.find(l=>l.id===t.lotteryId)!, t.isDltExtra || false).calculateBets(s.reds.length, s.blues.length) : 0), 0) || t.numbers.length) * (t.multiplier || 1) * (t.isDltExtra ? 3 : 2)), 0)).toFixed(2)}
                 </div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">累计投入</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium ">累计投入</div>
              </div>
              <div className="flex flex-col items-center flex-1 relative group cursor-pointer before:content-[''] before:absolute before:left-0 before:top-2 before:bottom-2 before:w-[1px] before:bg-gray-100 dark:before:bg-slate-800">
                 <div className={`font-extrabold text-[22px] font-sans tracking-tight block truncate w-full px-1 ${totalPrize > 0 ? 'text-red-500 dark:text-red-400' : 'text-gray-800 dark:text-gray-100'}`}>{totalPrize > 0 ? totalPrize.toFixed(2) : '0.00'}</div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium group-hover:text-gray-800 transition-colors">累计中奖</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1.5 font-medium ">累计中奖</div>
              </div>
           </div>
 
           {/* "号码本" Number Book Section Divider */}
-          <div className="flex items-center justify-center gap-4 pt-6 pb-2">
+          <div className="flex items-center justify-center gap-4 mt-6 mb-3">
              <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-gray-400 dark:via-slate-600 dark:to-slate-500 w-20"></div>
              <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 text-[15px] font-bold tracking-widest">
                 <History size={16} strokeWidth={2.5} /> 号码本
@@ -1225,15 +1228,12 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
           </div>
 
 
-
-          {/* Universal Watermark Background for Mine View - REMOVED per user request */}
-
-          {/* Saved Tickets content matching the empty state or showing list */}
+          {/* Saved Tickets content */}
           {savedTickets.length === 0 ? (
-            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-12 text-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-white/60 dark:border-slate-800/60 mb-8 relative z-10">
-              <History size={64} strokeWidth={1} className="mx-auto text-[#e2e8f0] dark:text-slate-700 mb-5" />
-              <p className="text-gray-600 dark:text-gray-300 text-[15px] font-bold mb-1.5">暂无保存的号码</p>
-              <p className="text-[#94a3b8] dark:text-gray-500 text-xs font-medium">去选号页面生成并保存吧</p>
+            <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl py-16 px-8 text-center shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-white/60 dark:border-slate-800/60 mb-8 relative z-10 min-h-[320px] flex flex-col items-center justify-center">
+              <History size={72} strokeWidth={0.8} className="text-gray-200 dark:text-slate-700 mb-6" />
+              <p className="text-gray-700 dark:text-gray-300 text-[16px] font-bold mb-2">暂无保存的号码</p>
+              <p className="text-gray-400 dark:text-gray-500 text-[13px] font-medium">去选号页面生成并保存吧</p>
             </div>
           ) : (
             <div className="space-y-3.5 pb-8">
