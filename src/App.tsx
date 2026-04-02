@@ -1143,13 +1143,13 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
         <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,24px)+16px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm">
           
           {/* Settings Icon - Top Right */}
-          <button onClick={() => setShowSettings(!showSettings)} className="absolute top-[calc(env(safe-area-inset-top,24px)+8px)] right-5 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white active:bg-white/25 transition-all z-20">
+          <button onClick={() => setShowSettings(!showSettings)} className="absolute top-[calc(env(safe-area-inset-top,24px)+8px)] right-5 w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white active:bg-white/25 transition-all z-[60]">
             <Settings size={18} />
           </button>
 
           {/* Settings Dropdown */}
           {showSettings && (
-            <div className="absolute top-[calc(env(safe-area-inset-top,24px)+40px)] right-5 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-2 z-30 min-w-[160px] animate-in fade-in slide-in-from-top-2">
+            <div className="absolute top-[calc(env(safe-area-inset-top,24px)+40px)] right-5 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-gray-100 dark:border-slate-700 p-2 z-[60] min-w-[160px] animate-in fade-in slide-in-from-top-2">
               <button onClick={() => { handleExport(); setShowSettings(false); }} className="w-full text-left text-sm text-gray-700 dark:text-gray-200 px-3 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700 active:bg-gray-100 transition-colors flex items-center gap-2 font-medium">
                 📤 导出备份
               </button>
