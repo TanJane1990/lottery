@@ -1119,13 +1119,43 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
     });
   });
 
-  const handleExport = () => {
-    const data = JSON.stringify(savedTickets, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `号码本备份_${new Date().toISOString().split('T')[0]}.json`;
-    a.click(); URL.revokeObjectURL(url);
+  const handleExport = async () => {
+    try {
+      const data = JSON.stringify(savedTickets, null, 2);
+      const fileName = `号码本备份_${new Date().toISOString().split('T')[0]}.json`;
+      
+      // Try Capacitor Filesystem + Share for native Android
+      try {
+        const { Filesystem, Directory } = await import('@capacitor/filesystem');
+        const { Share } = await import('@capacitor/share');
+        
+        const result = await Filesystem.writeFile({
+          path: fileName,
+          data: btoa(unescape(encodeURIComponent(data))),
+          directory: Directory.Cache,
+        });
+        
+        await Share.share({
+          title: '号码本备份',
+          text: `共${savedTickets.length}条记录`,
+          url: result.uri,
+          dialogTitle: '导出号码本备份',
+        });
+        return;
+      } catch {
+        // Fallback: try browser download
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (e) {
+      console.error('Export failed', e);
+    }
   };
 
   const handleImport = () => {
