@@ -422,22 +422,37 @@ const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInf
       </div>
 
       {/* Bottom Balls Line / Right Balls */}
-      <div className={`flex flex-row items-center ${isSmallLottery ? 'gap-2 sm:gap-2.5 justify-start' : `w-full justify-start ${lottery.id === 'QLC' ? 'flex-wrap gap-[7px] sm:gap-2.5' : 'gap-[5px] sm:gap-2.5'}`}`}>
-         {result.reds.map((n: number, i: number) => (
-           <div key={`r-${i}`} className={`relative w-[42px] sm:w-[46px] aspect-square flex-shrink min-w-[32px] bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px] ${lottery.id === 'QLC' || isSmallLottery ? 'flex-shrink-0' : ''}`}>
-             <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-[18px]" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-               <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.red.max)}</span>
+      {lottery.id === 'KL8' ? (
+        /* KL8 special layout: 20 balls in a compact 10x2 grid */
+        <div className="w-full">
+          <div className="flex flex-wrap gap-[5px] justify-start">
+            {result.reds.map((n: number, i: number) => (
+              <div key={`r-${i}`} className="relative w-[30px] h-[30px] bg-white dark:bg-slate-800 rounded-full shadow-[0_2px_4px_rgba(0,0,0,0.1)] p-[2px] flex-shrink-0">
+                <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[11px]" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+                  <span style={{ textShadow: '0 1px 1px rgba(0,0,0,0.5)' }}>{formatNum(n, lottery.red.max)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className={`flex flex-row items-center ${isSmallLottery ? 'gap-2 sm:gap-2.5 justify-start' : `w-full justify-start ${lottery.id === 'QLC' ? 'flex-wrap gap-[7px] sm:gap-2.5' : 'gap-[5px] sm:gap-2.5'}`}`}>
+           {result.reds.map((n: number, i: number) => (
+             <div key={`r-${i}`} className={`relative w-[42px] sm:w-[46px] aspect-square flex-shrink min-w-[32px] bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px] ${lottery.id === 'QLC' || isSmallLottery ? 'flex-shrink-0' : ''}`}>
+               <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-[18px]" style={{ backgroundImage: `url(${getBallImage('red', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+                 <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.red.max)}</span>
+               </div>
              </div>
-           </div>
-         ))}
-         {result.blues && result.blues.map((n: number, i: number) => (
-           <div key={`b-${i}`} className={`relative w-[42px] sm:w-[46px] aspect-square flex-shrink min-w-[32px] bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px] ${lottery.id === 'QLC' ? 'flex-shrink-0' : ''}`}>
-             <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-[18px]" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
-               <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.blue.max)}</span>
+           ))}
+           {result.blues && result.blues.map((n: number, i: number) => (
+             <div key={`b-${i}`} className={`relative w-[42px] sm:w-[46px] aspect-square flex-shrink min-w-[32px] bg-white dark:bg-slate-800 rounded-full shadow-[0_3px_6px_rgba(0,0,0,0.12)] p-[2.5px] ${lottery.id === 'QLC' ? 'flex-shrink-0' : ''}`}>
+               <div className="w-full h-full rounded-full text-white flex items-center justify-center font-bold text-[15px] sm:text-[18px]" style={{ backgroundImage: `url(${getBallImage('blue', lottery.id)})`, backgroundSize: '102%', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+                 <span style={{ textShadow: '0 1px 1.5px rgba(0,0,0,0.6)', marginTop: '-1px' }}>{formatNum(n, lottery.blue.max)}</span>
+               </div>
              </div>
-           </div>
-         ))}
-      </div>
+           ))}
+        </div>
+      )}
     </div>
   );
 };
