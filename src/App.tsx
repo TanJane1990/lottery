@@ -8,7 +8,7 @@ import { SportsView } from './SportsView';
 
 // --- Types ---
 type Org = '福彩' | '体彩';
-type LotteryId = 'SSQ' | 'DLT' | 'FC3D' | 'PL3' | 'QLC' | 'QXC';
+type LotteryId = 'SSQ' | 'DLT' | 'FC3D' | 'PL3' | 'PL5' | 'QLC' | 'QXC' | 'KL8';
 
 interface LotteryConfig {
   id: LotteryId;
@@ -68,6 +68,8 @@ const LOTTERIES: LotteryConfig[] = [
   { id: 'PL3', name: '排列3', org: '体彩', theme: 'blue', red: { max: 9, count: 3, allowDuplicate: true }, blue: { max: 0, count: 0 }, desc: '天天开奖，轻松赢', icon: '/icons/P3.png', schedule: '每日开奖' },
   { id: 'QLC', name: '七乐彩', org: '福彩', theme: 'red', red: { max: 30, count: 7 }, blue: { max: 0, count: 0 }, desc: '百万大奖等你拿', icon: '/icons/QLC.png', schedule: '每周一、三、五开奖' },
   { id: 'QXC', name: '七星彩', org: '体彩', theme: 'blue', red: { max: 9, count: 6, allowDuplicate: true }, blue: { max: 14, count: 1 }, desc: '经典玩法，惊喜不断', icon: '/icons/QXC.png', schedule: '每周二、五、日开奖' },
+  { id: 'PL5', name: '排列5', org: '体彩', theme: 'blue', red: { max: 9, count: 5, allowDuplicate: true }, blue: { max: 0, count: 0 }, desc: '天天开奖，十万大奖', icon: '/icons/P5.png', schedule: '每日开奖' },
+  { id: 'KL8', name: '快乐8', org: '福彩', theme: 'red', red: { max: 80, count: 10 }, blue: { max: 0, count: 0 }, desc: '选号自由，快乐加倍', icon: '/icons/K8.png', schedule: '每日开奖' },
 ];
 
 // --- Helpers ---
@@ -146,7 +148,7 @@ class DigitalStrategy implements PlayStrategy {
 
 const getStrategy = (config: LotteryConfig, isDltExtra: boolean): PlayStrategy => {
   if (config.id === 'DLT') return new DLTExtraStrategy(isDltExtra);
-  if (['FC3D', 'PL3', 'QXC'].includes(config.id)) {
+  if (['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id)) {
     return new DigitalStrategy(config.name, 2, config.red.count);
   }
   return new StandardStrategy(config.name, 2, config.red.count, config.blue.count);
@@ -174,7 +176,7 @@ const generateUniqueNumbers = (config: LotteryConfig, history: any[]) => {
     return Array.from(s).sort((a, b) => a - b);
   };
 
-  const zeroRed = ['FC3D', 'PL3', 'QXC'].includes(config.id);
+  const zeroRed = ['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id);
   const zeroBlue = ['QXC'].includes(config.id);
 
   const historySet = new Set((history || []).map(item => {
@@ -234,7 +236,7 @@ const generateSmartMix = (config: LotteryConfig, prevBets: any[]) => {
     }
   };
 
-  const zeroRed = ['FC3D', 'PL3', 'QXC'].includes(config.id);
+  const zeroRed = ['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id);
   const zeroBlue = ['QXC'].includes(config.id);
   const prevReds = prevBets.map(b => b.reds);
   const prevBlues = prevBets.map(b => b.blues || []);
@@ -270,6 +272,7 @@ const fetchSporttery = async (gameNo: string, pageNo: number = 1, pageSize: numb
       let blues: number[] = [];
       if (gameNo === '85') { reds = nums.slice(0, 5).map(Number); blues = nums.slice(5, 7).map(Number); }
       else if (gameNo === '35') { reds = nums.slice(0, 3).map(Number); }
+      else if (gameNo === '350133') { reds = nums.slice(0, 5).map(Number); }
       else if (gameNo === '04') { reds = nums.slice(0, 6).map(Number); blues = nums.slice(6, 7).map(Number); }
       return {
         issue: item.lotteryDrawNum,
@@ -323,6 +326,8 @@ export const fetchRealData = async (id: LotteryId, page: number = 1, pageSize: n
     if (id === 'SSQ') return await fetchCWL('ssq', page, pageSize);
     if (id === 'FC3D') return await fetchCWL('3d', page, pageSize);
     if (id === 'QLC') return await fetchCWL('qlc', page, pageSize);
+    if (id === 'PL5') return await fetchSporttery('350133', page, pageSize);
+    if (id === 'KL8') return await fetchCWL('kl8', page, pageSize);
   } catch (e) {
     console.log(`Failed to fetch ${id} page ${page}`);
     return [];
@@ -378,7 +383,7 @@ const Ball: React.FC<{ num: number, color: 'red' | 'blue', max: number, lotteryI
 };
 
 const ResultCard: React.FC<{ lottery: LotteryConfig, result: any, hideLotteryInfo?: boolean, isWinner?: boolean }> = ({ lottery, result, hideLotteryInfo, isWinner }) => {
-  const isSmallLottery = lottery.id === 'FC3D' || lottery.id === 'PL3';
+  const isSmallLottery = lottery.id === 'FC3D' || lottery.id === 'PL3' || lottery.id === 'PL5';
 
   return (
     <div className={`bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-white/60 dark:border-slate-800/60 rounded-2xl p-4 sm:p-5 w-full flex ${isSmallLottery ? 'flex-row items-center justify-between flex-wrap gap-4' : 'flex-col gap-4'} shadow-[0_4px_16px_rgba(0,0,0,0.04)] relative overflow-hidden`}>
@@ -548,7 +553,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   const totalCost = combinations * currentStrategy.basePricePerBet;
 
   const handleToggleManual = (type: 'red' | 'blue', num: number) => {
-    if (['FC3D', 'PL3', 'QXC'].includes(config.id)) {
+    if (['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id)) {
       // Simplified manual pick for these types not fully supported in this demo
       return; 
     }
@@ -620,13 +625,13 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2 relative z-0">
         {/* Universal Watermark Background */}
-        <div className="fixed top-[20%] left-0 right-0 bottom-32 flex items-center justify-center pointer-events-none z-[-1]">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[-1]">
           <img src={`.${config.icon}`} alt="" className="w-64 h-64 sm:w-80 sm:h-80 object-contain opacity-[0.04] dark:opacity-[0.05] grayscale" />
         </div>
 
         {mode === 'manual' ? (
           <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-white/60 dark:border-slate-800/60 relative z-10 overflow-hidden">
-            {['FC3D', 'PL3', 'QXC'].includes(config.id) ? (
+            {['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id) ? (
               <div className="text-center text-gray-400 dark:text-gray-500 py-10">数字型彩票手选功能开发中...</div>
             ) : (
               <div className="relative z-10">
@@ -748,7 +753,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
           )}
         </div>
 
-        {mode === 'manual' && !['FC3D', 'PL3', 'QXC'].includes(config.id) && (
+        {mode === 'manual' && !['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id) && (
           <div className="flex justify-between items-center px-1">
             <div className="text-sm text-gray-600 dark:text-gray-300">
               <span className="font-bold mr-2 text-gray-800 dark:text-gray-100 ">{currentStrategy.playName}</span>
@@ -950,6 +955,21 @@ const calcPrize = (lotteryId: LotteryId, redHits: number, blueHits: number, isEx
       if (redHits === 3) return { tier: '直选', amount: 1040 };
       return null;
     }
+    case 'PL5': {
+      if (redHits === 5) return { tier: '直选', amount: 100000 };
+      return null;
+    }
+    case 'KL8': {
+      // KL8 选10玩法: 中10个一等奖, 中9个二等奖, etc.
+      if (redHits >= 10) return { tier: '一等奖', amount: 2000000 };
+      if (redHits >= 9) return { tier: '二等奖', amount: 50000 };
+      if (redHits >= 8) return { tier: '三等奖', amount: 5000 };
+      if (redHits >= 7) return { tier: '四等奖', amount: 500 };
+      if (redHits >= 6) return { tier: '五等奖', amount: 30 };
+      if (redHits >= 5) return { tier: '六等奖', amount: 3 };
+      if (redHits === 0) return { tier: '七等奖', amount: 2 };
+      return null;
+    }
     default: return null;
   }
 };
@@ -1033,7 +1053,7 @@ const getMatchingResult = (ticket: SavedTicket, results: any[]) => {
   // Determine sales cutoff hour based on lottery type
   // Fucai (SSQ, FC3D, QLC): typically 20:00
   // Ticai (DLT, PL3, QXC): typically 21:00
-  const isTicai = ['DLT', 'PL3', 'QXC'].includes(ticket.lotteryId);
+  const isTicai = ['DLT', 'PL3', 'PL5', 'QXC'].includes(ticket.lotteryId);
   const cutoffHour = isTicai ? 21 : 20;
   const beijingHour = beijingTime.getUTCHours();
   const isAfterCutoff = beijingHour >= cutoffHour;
