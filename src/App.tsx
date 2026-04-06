@@ -215,23 +215,28 @@ const generateSmartMix = (config: LotteryConfig, prevBets: any[]) => {
     prevNumbers.forEach(betObj => {
        betObj.forEach(n => freq.set(n, (freq.get(n) || 0) + 1));
     });
-    const repeats: number[] = [];
-    const missing: number[] = [];
+    const appeared: number[] = [];
+    const notAppeared: number[] = [];
     for (const [num, count] of freq.entries()) {
-      if (count > 1) repeats.push(num);
-      else if (count === 0) missing.push(num);
+      // "在前四注中智能在已出的号码中选出一注" - Pick from numbers that have appeared in the first 4 sets
+      if (count > 0) appeared.push(num);
+      else notAppeared.push(num);
     }
     const shuffle = (arr: number[]) => [...arr].sort(() => Math.random() - 0.5);
-    let result: number[] = [];
+    
     if (allowDup) {
-       const mixedPool = shuffle([...repeats, ...missing, ...Array.from(allNums)]);
-       return Array.from({length: count}, () => mixedPool[Math.floor(Math.random() * mixedPool.length)]);
+       // If allowing duplicate (like FC3D), randomly pick from appeared numbers
+       // If none appeared (e.g., blue sets sometimes have none if skipped), use allNums
+       const pool = appeared.length > 0 ? appeared : Array.from(allNums);
+       return Array.from({length: count}, () => pool[Math.floor(Math.random() * pool.length)]);
     } else {
-       const missingTake = Math.max(1, Math.floor(count / 2));
-       const repeatTake = count - missingTake;
-       result = [...shuffle(missing).slice(0, missingTake), ...shuffle(repeats).slice(0, repeatTake)];
-       const pool = shuffle(Array.from(allNums).filter(n => !result.includes(n)));
-       while (result.length < count && pool.length > 0) result.push(pool.pop()!);
+       let result: number[] = shuffle(appeared).slice(0, count);
+       // If there are not enough unique numbers that appeared in the first 4 sets to form a new set,
+       // fill the rest randomly from the notAppeared pool
+       if (result.length < count) {
+           const fill = shuffle(notAppeared).slice(0, count - result.length);
+           result = [...result, ...fill];
+       }
        return result.sort((a,b) => a-b);
     }
   };
@@ -1532,18 +1537,19 @@ export default function App() {
 
             latestDataMapping[l.id] = mergedList;
             hasUpdates = true;
+            
+            // UI Update immediately for each lottery so users see new data on HomeView instantly
+            setResultsData(prev => ({
+              ...prev,
+              [l.id]: mergedList
+            }));
+            localStorage.setItem('lottery_history_data', JSON.stringify(latestDataMapping));
           }
         } catch (e) {
           console.error(`Error updating data for ${l.id}`, e);
         }
         // Small delay between each request to avoid overwhelming
         await new Promise(r => setTimeout(r, 300));
-      }
-
-      // 4. Silently update state and save to storage
-      if (hasUpdates) {
-        setResultsData(latestDataMapping);
-        localStorage.setItem('lottery_history_data', JSON.stringify(latestDataMapping));
       }
 
       // 5. Background Sync: if we haven't completed history sync, fetch all past pages quietly
