@@ -931,7 +931,7 @@ const calcSSQPrize = (redHits: number, blueHits: number): { tier: string, amount
   if (redHits === 5 && blueHits === 1) return { tier: '三等奖', amount: 3000 };
   if ((redHits === 5 && blueHits === 0) || (redHits === 4 && blueHits === 1)) return { tier: '四等奖', amount: 200 };
   if ((redHits === 4 && blueHits === 0) || (redHits === 3 && blueHits === 1)) return { tier: '五等奖', amount: 10 };
-  if (blueHits === 1 && redHits <= 2) return { tier: '六等奖', amount: 5 };
+  if ((blueHits === 1 && redHits <= 2) || (redHits === 3 && blueHits === 0)) return { tier: '六等奖', amount: 5 };
   return null;
 };
 
