@@ -588,8 +588,8 @@ const getBallImage = (color: 'red' | 'blue', lotteryId?: LotteryId | null): stri
   switch (lotteryId) {
     case 'SSQ': // 双色球：红球 + 蓝球
       return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
-    case 'DLT': // 大乐透：蓝球 + 黄球
-      return color === 'red' ? './balls/blueCircle.png' : './balls/yellowCircle.png';
+    case 'DLT': // 大乐透：红球 + 蓝球
+      return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
     case 'QLC': // 七乐彩：红球 + 蓝球
       return color === 'red' ? './balls/redCircle.png' : './balls/blueCircle.png';
     case 'QXC': // 七星彩：前6蓝球 + 后1黄球
@@ -732,7 +732,7 @@ const HomeView = ({ onNavigate, resultsData, savedTickets }: { onNavigate: (tab:
       {/* Quick Access Grid */}
       <div className="px-4 -mt-5 relative z-20">
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.08)] border border-white dark:border-slate-800 p-3 grid grid-cols-2 gap-3.5">
-          {LOTTERIES.slice(0, 4).map(lottery => (
+          {LOTTERIES.map(lottery => (
             <div
               key={lottery.id}
               onClick={() => onNavigate('pick', lottery.id)}
