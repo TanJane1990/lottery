@@ -721,7 +721,7 @@ const HomeView = ({ onNavigate, resultsData, savedTickets }: { onNavigate: (tab:
   return (
     <div className="pb-2">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,20px)+30px)] pb-10 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(max(env(safe-area-inset-top),32px)+20px)] pb-10 px-6 rounded-b-[2.5rem] shadow-lg relative overflow-hidden">
         <div className="absolute top-0 right-0 opacity-10 transform translate-x-1/4 -translate-y-1/4">
           <Trophy size={200} />
         </div>
@@ -853,7 +853,7 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   return (
     <div className="flex flex-col h-full bg-transparent dark:bg-transparent relative">
       {/* Header */}
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(env(safe-area-inset-top,44px)+6px)] pb-2 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(max(env(safe-area-inset-top),32px)+16px)] pb-2 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-2 mt-1">智能机选</h1>
         {/* Lottery Tabs */}
         <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-1 px-2 pt-0 items-start justify-start">
@@ -1149,7 +1149,7 @@ const ResultsView = ({ resultsData }: { resultsData: Record<string, any[]> }) =>
 
   return (
     <div className="flex flex-col h-full bg-transparent dark:bg-transparent relative z-0">
-      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(env(safe-area-inset-top,44px)+6px)] pb-2 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
+      <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-md pt-[calc(max(env(safe-area-inset-top),32px)+16px)] pb-2 px-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] z-10 sticky top-0 border-b border-white/20 dark:border-slate-800">
         <h1 className="text-xl font-bold text-center text-gray-800 dark:text-gray-100 mb-2 mt-1">历史开奖</h1>
         <div className="flex overflow-x-auto hide-scrollbar gap-4 pb-1 px-2 pt-0 items-start justify-start">
           {LOTTERIES.map(l => {
@@ -1480,7 +1480,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
       <div className="flex-1 overflow-y-auto z-10 w-full relative pb-10">
         
         {/* Settings Icon + Dropdown - OUTSIDE header stacking context so it floats above everything */}
-        <div className="absolute top-[calc(env(safe-area-inset-top,24px)+8px)] right-5 z-[60]">
+        <div className="absolute top-[calc(max(env(safe-area-inset-top),32px)+8px)] right-5 z-[60]">
           <button onClick={() => setShowSettings(!showSettings)} className="w-9 h-9 rounded-full bg-white/15 flex items-center justify-center text-white active:bg-white/25 transition-all">
             <Settings size={18} />
           </button>
@@ -1510,7 +1510,7 @@ const MineView = ({ savedTickets, onDeleteTicket, onSaveTicket, resultsData, isD
         </div>
 
         {/* Top Red Background Header - QR on left, text on right */}
-        <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(env(safe-area-inset-top,24px)+16px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm">
+        <div className="bg-gradient-to-br from-red-600 to-red-800 pt-[calc(max(env(safe-area-inset-top),32px)+20px)] pb-14 px-5 rounded-b-[2.5rem] relative z-0 shadow-sm">
 
           {/* Header Content: QR left, Text right */}
           <div className="flex items-center gap-4 mt-1">
