@@ -34,6 +34,7 @@ interface SavedTicket {
 const pickViewStateCache = {
   selectedLotteryId: '' as string,
   mode: 'smart' as 'smart' | 'manual',
+  algorithm: 'random' as string,
   sets: [] as any[],
   manualReds: [] as number[],
   manualBlues: [] as number[],
@@ -251,6 +252,243 @@ const generateSmartMix = (config: LotteryConfig, prevBets: any[]) => {
 
   return { reds, blues, isSmartAppended: true, id: Math.random().toString(36).substring(7) };
 };
+
+// ============================================================
+// Advanced Algorithm Strategies
+// ============================================================
+type AlgorithmId = 'random' | 'ai' | 'kill' | 'sumac' | 'path012' | 'anchor';
+
+const ALGORITHMS: { id: AlgorithmId; label: string; emoji: string; desc: string }[] = [
+  { id: 'random', label: '随机', emoji: '🎲', desc: '纯随机机选，平等概率' },
+  { id: 'ai', label: 'AI推荐', emoji: '🧠', desc: '多因子评分模型，综合加权优选' },
+  { id: 'kill', label: '杀号', emoji: '🎯', desc: '6道规则链过滤，幸存号码池中选' },
+  { id: 'sumac', label: '和值', emoji: '📊', desc: '和值区间+AC值双重约束' },
+  { id: 'path012', label: '012路', emoji: '🔄', desc: '按余数三路均衡分配' },
+  { id: 'anchor', label: '胆拖', emoji: '💎', desc: 'AI锁定胆码，随机补拖码' },
+];
+
+// Helper: shuffle array
+const shuffleArr = (arr: number[]): number[] => [...arr].sort(() => Math.random() - 0.5);
+
+// Helper: weighted random pick (pick `count` unique items from `pool` weighted by `weights`)
+const weightedPick = (pool: number[], weights: number[], count: number): number[] => {
+  const result: number[] = [];
+  const remaining = pool.map((n, i) => ({ n, w: weights[i] }));
+  for (let i = 0; i < count && remaining.length > 0; i++) {
+    const totalW = remaining.reduce((s, r) => s + r.w, 0);
+    let rand = Math.random() * totalW;
+    let picked = remaining[remaining.length - 1];
+    for (const r of remaining) {
+      rand -= r.w;
+      if (rand <= 0) { picked = r; break; }
+    }
+    result.push(picked.n);
+    remaining.splice(remaining.indexOf(picked), 1);
+  }
+  return result.sort((a, b) => a - b);
+};
+
+// --- Algorithm 1: AI Multi-factor Scoring ---
+const generateAIScoring = (config: LotteryConfig, history: any[]): { reds: number[]; blues: number[]; algorithmTag?: string } => {
+  const isDigital = ['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id);
+  if (history.length < 10) return { ...generateUniqueNumbers(config, history), algorithmTag: 'ai' };
+
+  const scoreNumbers = (max: number, count: number, allowDup: boolean, zeroBased: boolean, historyNums: number[][], type: 'red' | 'blue') => {
+    if (count === 0) return [];
+    const start = zeroBased ? 0 : 1;
+    const allNums: number[] = [];
+    for (let i = start; i <= max; i++) allNums.push(i);
+    const scores: Map<number, number> = new Map();
+    allNums.forEach(n => scores.set(n, 0));
+    const recentN = Math.min(history.length, 50);
+    const recent10 = Math.min(history.length, 10);
+
+    // 1. Frequency score (20%)
+    const freqMap = new Map<number, number>();
+    allNums.forEach(n => freqMap.set(n, 0));
+    for (let i = 0; i < recentN; i++) {
+      const nums = type === 'red' ? history[i].reds : (history[i].blues || []);
+      nums.forEach((n: number) => freqMap.set(n, (freqMap.get(n) || 0) + 1));
+    }
+    const maxFreq = Math.max(...freqMap.values(), 1);
+    allNums.forEach(n => { scores.set(n, (scores.get(n) || 0) + ((freqMap.get(n) || 0) / maxFreq) * 20); });
+
+    // 2. Recent activity score (25%)
+    allNums.forEach(n => {
+      let actScore = 0;
+      for (let i = 0; i < recent10; i++) {
+        const nums = type === 'red' ? history[i].reds : (history[i].blues || []);
+        if (nums.includes(n)) actScore += Math.pow(0.7, i) * 25;
+      }
+      scores.set(n, (scores.get(n) || 0) + actScore);
+    });
+
+    // 3. Periodicity score (20%)
+    allNums.forEach(n => {
+      let lastSeen = -1;
+      const appearances: number[] = [];
+      for (let i = 0; i < recentN; i++) {
+        const nums = type === 'red' ? history[i].reds : (history[i].blues || []);
+        if (nums.includes(n)) { if (lastSeen === -1) lastSeen = i; appearances.push(i); }
+      }
+      if (appearances.length >= 3) {
+        const gaps: number[] = [];
+        for (let j = 1; j < appearances.length; j++) gaps.push(appearances[j] - appearances[j - 1]);
+        const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+        const currentGap = lastSeen === -1 ? recentN : lastSeen;
+        const periodScore = Math.max(0, 20 - Math.abs(currentGap - avgGap) * 3);
+        scores.set(n, (scores.get(n) || 0) + periodScore);
+      }
+    });
+
+    // 4. Adjacent number score (15%)
+    if (history.length > 0) {
+      const lastNums = type === 'red' ? history[0].reds : (history[0].blues || []);
+      allNums.forEach(n => { for (const ln of lastNums) { if (Math.abs(n - ln) === 1) { scores.set(n, (scores.get(n) || 0) + 15); break; } } });
+    }
+
+    // 5. Same-tail score (10%)
+    if (history.length > 0) {
+      const lastNums = type === 'red' ? history[0].reds : (history[0].blues || []);
+      const lastTails = new Set(lastNums.map((n: number) => n % 10));
+      allNums.forEach(n => { if (lastTails.has(n % 10)) scores.set(n, (scores.get(n) || 0) + 10); });
+    }
+
+    // 6. Missing recovery score (10%)
+    allNums.forEach(n => {
+      let missing = 0;
+      for (let i = 0; i < recentN; i++) {
+        const nums = type === 'red' ? history[i].reds : (history[i].blues || []);
+        if (nums.includes(n)) break; missing++;
+      }
+      scores.set(n, (scores.get(n) || 0) + Math.min(10, missing * 0.5));
+    });
+
+    const pool = allNums;
+    const weights = pool.map(n => Math.max(1, scores.get(n) || 1));
+    if (allowDup) {
+      return Array.from({ length: count }, () => {
+        const totalW = weights.reduce((s, w) => s + w, 0);
+        let rand = Math.random() * totalW;
+        for (let i = 0; i < pool.length; i++) { rand -= weights[i]; if (rand <= 0) return pool[i]; }
+        return pool[pool.length - 1];
+      });
+    }
+    return weightedPick(pool, weights, count);
+  };
+
+  const zeroRed = isDigital; const zeroBlue = config.id === 'QXC';
+  const reds = scoreNumbers(config.red.max, config.red.count, !!config.red.allowDuplicate, zeroRed, history.map(h => h.reds), 'red');
+  const blues = scoreNumbers(config.blue.max, config.blue.count, !!config.blue.allowDuplicate, zeroBlue, history.map(h => h.blues || []), 'blue');
+  return { reds, blues, algorithmTag: 'ai' };
+};
+
+// --- Algorithm 2: Kill Number (Elimination) ---
+const generateKillNumber = (config: LotteryConfig, history: any[]): { reds: number[]; blues: number[]; algorithmTag?: string } => {
+  const isDigital = ['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id);
+  if (history.length < 5 || isDigital) return { ...generateUniqueNumbers(config, history), algorithmTag: 'kill' };
+  const lastDraw = history[0];
+  const allReds: number[] = []; for (let i = 1; i <= config.red.max; i++) allReds.push(i);
+  const missingMap = new Map<number, number>();
+  allReds.forEach(n => { let miss = 0; for (let i = 0; i < Math.min(history.length, 50); i++) { if (history[i].reds.includes(n)) break; miss++; } missingMap.set(n, miss); });
+  let survivors = [...allReds];
+  // Rule 1: Kill repeats > 2
+  const lastReds = new Set(lastDraw.reds as number[]);
+  const repeats = survivors.filter(n => lastReds.has(n));
+  if (repeats.length > 2) { const keep = shuffleArr(repeats).slice(0, 2); survivors = survivors.filter(n => !lastReds.has(n) || keep.includes(n)); }
+  // Rule 2: Kill extreme cold > 15 missing, keep 1
+  const coldNums = survivors.filter(n => (missingMap.get(n) || 0) > 15);
+  if (coldNums.length > 1) { const keep = shuffleArr(coldNums).slice(0, 1); survivors = survivors.filter(n => (missingMap.get(n) || 0) <= 15 || keep.includes(n)); }
+  if (survivors.length < config.red.count + 3) { const killed = allReds.filter(n => !survivors.includes(n)); survivors = [...survivors, ...shuffleArr(killed).slice(0, config.red.count + 3 - survivors.length)]; }
+  for (let attempt = 0; attempt < 200; attempt++) {
+    const reds = shuffleArr(survivors).slice(0, config.red.count).sort((a, b) => a - b);
+    const oddCount = reds.filter(n => n % 2 === 1).length;
+    if (oddCount === 0 || oddCount === reds.length) continue;
+    const tailCount = new Map<number, number>(); reds.forEach(n => tailCount.set(n % 10, (tailCount.get(n % 10) || 0) + 1));
+    if (Array.from(tailCount.values()).some(c => c > 2)) continue;
+    let hasTriple = false; for (let i = 0; i < reds.length - 2; i++) { if (reds[i+1] === reds[i]+1 && reds[i+2] === reds[i]+2) { hasTriple = true; break; } }
+    if (hasTriple) continue;
+    const sum = reds.reduce((a, b) => a + b, 0);
+    const histSums = history.slice(0, 50).map((h: any) => (h.reds as number[]).reduce((a: number, b: number) => a + b, 0));
+    if (histSums.length > 5) { const avg = histSums.reduce((a: number, b: number) => a + b, 0) / histSums.length; const std = Math.sqrt(histSums.reduce((s: number, v: number) => s + (v - avg) ** 2, 0) / histSums.length); if (sum < avg - 2*std || sum > avg + 2*std) continue; }
+    return { reds, blues: generateUniqueNumbers(config, history).blues, algorithmTag: 'kill' };
+  }
+  return { ...generateUniqueNumbers(config, history), algorithmTag: 'kill' };
+};
+
+// --- Algorithm 3: Sum + AC Value Optimization ---
+const generateSumAC = (config: LotteryConfig, history: any[]): { reds: number[]; blues: number[]; algorithmTag?: string } => {
+  const isDigital = ['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id);
+  if (history.length < 20 || isDigital) return { ...generateUniqueNumbers(config, history), algorithmTag: 'sumac' };
+  const histSums = history.slice(0, 100).map((h: any) => (h.reds as number[]).reduce((a: number, b: number) => a + b, 0));
+  const avgSum = histSums.reduce((a: number, b: number) => a + b, 0) / histSums.length;
+  const stdDev = Math.sqrt(histSums.reduce((s: number, v: number) => s + (v - avgSum) ** 2, 0) / histSums.length);
+  const calcAC = (nums: number[]): number => { const diffs = new Set<number>(); for (let i = 0; i < nums.length; i++) for (let j = i+1; j < nums.length; j++) diffs.add(Math.abs(nums[i]-nums[j])); return diffs.size - (nums.length - 1); };
+  const histACs = history.slice(0, 100).map((h: any) => calcAC(h.reds as number[]));
+  const medianAC = [...histACs].sort((a, b) => a - b)[Math.floor(histACs.length / 2)];
+  for (let attempt = 0; attempt < 500; attempt++) {
+    const { reds, blues } = generateUniqueNumbers(config, history);
+    const sum = reds.reduce((a, b) => a + b, 0);
+    if (sum >= avgSum - 1.5*stdDev && sum <= avgSum + 1.5*stdDev && calcAC(reds) >= medianAC) return { reds, blues, algorithmTag: 'sumac' };
+  }
+  return { ...generateUniqueNumbers(config, history), algorithmTag: 'sumac' };
+};
+
+// --- Algorithm 4: 012 Path Balance ---
+const generate012Path = (config: LotteryConfig, history: any[]): { reds: number[]; blues: number[]; algorithmTag?: string } => {
+  const isDigital = ['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id);
+  if (history.length < 10 || isDigital) return { ...generateUniqueNumbers(config, history), algorithmTag: 'path012' };
+  const recentN = Math.min(history.length, 20);
+  const pathCounts: Record<string, number> = {};
+  for (let i = 0; i < recentN; i++) { const p = [0,0,0]; (history[i].reds as number[]).forEach((n: number) => p[n%3]++); pathCounts[p.sort((a,b)=>b-a).join(':')] = (pathCounts[p.join(':')] || 0) + 1; }
+  const topPatterns = Object.entries(pathCounts).sort((a,b) => b[1]-a[1]).slice(0,3).map(e => e[0].split(':').map(Number));
+  const chosen = topPatterns[Math.floor(Math.random() * topPatterns.length)];
+  const assignment = shuffleArr([0,1,2]);
+  const needs: Record<number, number> = {}; assignment.forEach((p,i) => { needs[p] = chosen[i]; });
+  const pools: Record<number, number[]> = {0:[],1:[],2:[]}; for (let i=1; i<=config.red.max; i++) pools[i%3].push(i);
+  const freqMap = new Map<number, number>(); for (let i=1; i<=config.red.max; i++) freqMap.set(i,0);
+  for (let i=0; i<recentN; i++) (history[i].reds as number[]).forEach((n: number) => freqMap.set(n, (freqMap.get(n)||0)+1));
+  let reds: number[] = [];
+  for (const path of [0,1,2]) { const need = needs[path]||0; const pool = shuffleArr(pools[path]); pool.sort((a,b) => (freqMap.get(b)||0)-(freqMap.get(a)||0)); reds.push(...shuffleArr(pool.slice(0, Math.max(need+2, Math.ceil(pool.length/2)))).slice(0, need)); }
+  while (reds.length < config.red.count) { const pool = Array.from({length:config.red.max},(_,i)=>i+1).filter(n=>!reds.includes(n)); reds.push(pool[Math.floor(Math.random()*pool.length)]); }
+  reds = reds.slice(0, config.red.count).sort((a,b) => a-b);
+  return { reds, blues: generateUniqueNumbers(config, history).blues, algorithmTag: 'path012' };
+};
+
+// --- Algorithm 5: Anchor-Drag Smart Selection ---
+const generateAnchorDrag = (config: LotteryConfig, history: any[]): { reds: number[]; blues: number[]; anchors?: number[]; algorithmTag?: string } => {
+  const isDigital = ['FC3D', 'PL3', 'PL5', 'QXC'].includes(config.id);
+  if (history.length < 10 || isDigital) return { ...generateUniqueNumbers(config, history), algorithmTag: 'anchor' };
+  const recentN = Math.min(history.length, 30); const recent10 = Math.min(history.length, 10);
+  const confidence = new Map<number, number>(); for (let i=1; i<=config.red.max; i++) confidence.set(i, 0);
+  // Factor A: Hot in last 10
+  const freq10 = new Map<number, number>(); for (let i=1; i<=config.red.max; i++) freq10.set(i,0);
+  for (let i=0; i<recent10; i++) (history[i].reds as number[]).forEach((n: number) => freq10.set(n, (freq10.get(n)||0)+1));
+  for (let i=1; i<=config.red.max; i++) { if ((freq10.get(i)||0)>=3) confidence.set(i,(confidence.get(i)||0)+40); else if ((freq10.get(i)||0)>=2) confidence.set(i,(confidence.get(i)||0)+20); }
+  // Factor B: Due number
+  for (let i=1; i<=config.red.max; i++) { let lastSeen=-1; const app: number[]=[]; for (let j=0;j<recentN;j++) { if ((history[j].reds as number[]).includes(i)) { if(lastSeen===-1)lastSeen=j; app.push(j); } } if (app.length>=3) { const gaps: number[]=[]; for(let k=1;k<app.length;k++) gaps.push(app[k]-app[k-1]); const avg=gaps.reduce((a,b)=>a+b,0)/gaps.length; if (Math.abs((lastSeen===-1?recentN:lastSeen)-avg)<=1) confidence.set(i,(confidence.get(i)||0)+35); } }
+  // Factor C: Adjacent to last draw
+  if (history.length>0) { const lr = history[0].reds as number[]; for (const n of lr) { if(n-1>=1) confidence.set(n-1,(confidence.get(n-1)||0)+25); if(n+1<=config.red.max) confidence.set(n+1,(confidence.get(n+1)||0)+25); } }
+  const sorted = Array.from(confidence.entries()).sort((a,b)=>b[1]-a[1]);
+  const anchorCount = Math.min(2, Math.max(1, Math.floor(config.red.count/3)));
+  const anchors = sorted.slice(0, anchorCount).map(e=>e[0]);
+  const drags = shuffleArr(Array.from({length:config.red.max},(_,i)=>i+1).filter(n=>!anchors.includes(n))).slice(0, config.red.count-anchors.length);
+  return { reds: [...anchors,...drags].sort((a,b)=>a-b), blues: generateUniqueNumbers(config, history).blues, anchors, algorithmTag: 'anchor' };
+};
+
+// Dispatcher
+const generateByAlgorithm = (algo: AlgorithmId, config: LotteryConfig, history: any[]): any => {
+  switch (algo) {
+    case 'ai': return generateAIScoring(config, history);
+    case 'kill': return generateKillNumber(config, history);
+    case 'sumac': return generateSumAC(config, history);
+    case 'path012': return generate012Path(config, history);
+    case 'anchor': return generateAnchorDrag(config, history);
+    default: return { ...generateUniqueNumbers(config, history), algorithmTag: undefined };
+  }
+};
+
+
 
 const generateMockResults = () => {
   const results: Record<string, any[]> = {};
@@ -542,7 +780,8 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
   const [mode, setMode] = useState<'smart' | 'manual'>(isSameLottery ? pickViewStateCache.mode : 'smart');
   const [manualReds, setManualReds] = useState<number[]>(isSameLottery ? pickViewStateCache.manualReds : []);
   const [manualBlues, setManualBlues] = useState<number[]>(isSameLottery ? pickViewStateCache.manualBlues : []);
-  const [isDltExtra, setIsDltExtra] = useState(isSameLottery ? pickViewStateCache.isDltExtra : false); // For DLT 追加
+  const [isDltExtra, setIsDltExtra] = useState(isSameLottery ? pickViewStateCache.isDltExtra : false);
+  const [algorithm, setAlgorithm] = useState<AlgorithmId>(isSameLottery ? (pickViewStateCache.algorithm as AlgorithmId) : 'random'); // For DLT 追加
 
   useEffect(() => {
     pickViewStateCache.selectedLotteryId = selectedLotteryId;
@@ -552,7 +791,8 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
     pickViewStateCache.manualBlues = manualBlues;
     pickViewStateCache.multiplier = multiplier;
     pickViewStateCache.isDltExtra = isDltExtra;
-  }, [selectedLotteryId, mode, sets, manualReds, manualBlues, multiplier, isDltExtra]);
+    pickViewStateCache.algorithm = algorithm;
+  }, [selectedLotteryId, mode, sets, manualReds, manualBlues, multiplier, isDltExtra, algorithm]);
 
   const prevLotteryId = React.useRef(selectedLotteryId);
   const prevMode = React.useRef(mode);
@@ -600,7 +840,8 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
           if (i === 4 && newSets.length === 4) {
              newSets.push(generateSmartMix(config, newSets));
           } else {
-             newSets.push({ ...generateUniqueNumbers(config, history), id: Math.random().toString(36).substring(7) });
+             const generated = generateByAlgorithm(algorithm, config, history);
+             newSets.push({ ...generated, id: Math.random().toString(36).substring(7) });
           }
         }
       }
@@ -640,6 +881,30 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
           <button onClick={() => setMode('smart')} className={`flex-1 py-1 text-sm font-bold rounded-md transition-all ${mode === 'smart' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>智能机选</button>
           <button onClick={() => setMode('manual')} className={`flex-1 py-1 text-sm font-bold rounded-md transition-all ${mode === 'manual' ? 'bg-white dark:bg-slate-900 shadow text-gray-800 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}>手选 / 复式</button>
         </div>
+
+        {/* Algorithm Strategy Pills - only in smart mode */}
+        {mode === 'smart' && (
+          <div className="mt-1.5 mb-0">
+            <div className="flex overflow-x-auto hide-scrollbar gap-1.5 px-2 pb-1">
+              {ALGORITHMS.map(algo => {
+                const isActive = algorithm === algo.id;
+                return (
+                  <button
+                    key={algo.id}
+                    onClick={() => setAlgorithm(algo.id)}
+                    className={`flex items-center gap-1 px-3 py-1 rounded-full text-[12px] font-bold whitespace-nowrap transition-all flex-shrink-0 border ${isActive ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white border-amber-400 shadow-sm shadow-amber-200/50 dark:shadow-amber-900/30 scale-[1.03]' : 'bg-white dark:bg-slate-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-slate-700 active:scale-95'}`}
+                  >
+                    <span>{algo.emoji}</span>
+                    <span>{algo.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="px-3 mt-0.5">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium truncate">{ALGORITHMS.find(a => a.id === algorithm)?.desc}</p>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -735,7 +1000,12 @@ const PickView = ({ selectedLotteryId, onSelectLottery, onSave, resultsData }: {
                    )}
                    <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 relative z-10 w-full py-0.5 pointer-events-none">
                      {set.reds.map((n: number, i: number) => (
-                       <Ball key={`r-${set.id || idx}-${i}`} num={n} color="red" max={config.red.max} lotteryId={config.id} />
+                        <div key={`r-${set.id || idx}-${i}`} className={`relative ${set.anchors && set.anchors.includes(n) ? 'ring-2 ring-amber-400 ring-offset-1 rounded-full' : ''}`}>
+                          <Ball num={n} color="red" max={config.red.max} lotteryId={config.id} />
+                          {set.anchors && set.anchors.includes(n) && (
+                            <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-400 rounded-full flex items-center justify-center text-[7px] text-white font-bold shadow-sm z-20">胆</div>
+                          )}
+                        </div>
                      ))}
                      {set.blues.map((n: number, i: number) => (
                        <Ball key={`b-${set.id || idx}-${i}`} num={n} color="blue" max={config.blue.max} lotteryId={config.id} />
